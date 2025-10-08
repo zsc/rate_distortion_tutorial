@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第一章：信息论基础与率失真入门</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">率失真理论教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第一章：信息论基础与率失真入门</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第二章：率失真定理与理论性质</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第三章：经典信源的率失真函数</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第四章：率失真计算与矢量量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第五章：感知失真度量与率失真感知权衡</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第六章：图像与视频压缩中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第七章：字典学习与稀疏编码的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第八章：深度学习中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第九章：实践指南与应用案例</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="_1">第一章：信息论基础与率失真入门</h1>
+<p>本章回顾信息论的核心概念，包括熵、联合熵、条件熵和互信息，并在此基础上引入率失真理论。我们将了解有损压缩的基本权衡，学习如何选择失真度量，以及率失真函数的定义。通过简单例子建立对率失真理论的直觉理解。</p>
+<p><strong>学习目标</strong>：</p>
+<ul>
+<li>掌握熵和互信息的物理意义</li>
+<li>理解有损压缩的必要性和基本思想</li>
+<li>学会选择合适的失真度量</li>
+<li>理解率失真函数的定义和意义</li>
+</ul>
+<hr />
+<h2 id="11">1.1 信息论基础回顾</h2>
+<h3 id="111">1.1.1 熵：不确定性的度量</h3>
+<p><strong>熵</strong>（Entropy）是信息论的核心概念，由克劳德·香农（Claude Shannon）在1948年的开创性论文中引入。它度量了一个随机变量的不确定性或"惊奇程度"。对于离散随机变量 $X$，其熵定义为：</p>
+<p>$$H(X) = -\sum_{x \in \mathcal{X}} p(x) \log p(x)$$
+其中 $\mathcal{X}$ 是 $X$ 的取值空间，$p(x)$ 是概率质量函数。按照惯例，$0 \log 0 = 0$。对数通常以2为底（单位：比特）或自然对数（单位：奈特nat）。</p>
+<p><strong>物理意义的多重解释</strong>：</p>
+<ol>
+<li>
+<p><strong>压缩视角</strong>：熵 $H(X)$ 表示用最优无损编码方案对 $X$ 进行压缩时，平均每个符号所需的最少比特数。这是香农无损编码定理的核心结果。换句话说，熵是信源的"固有压缩极限"——无论多么聪明的压缩算法，长期平均下都无法突破这个界限。</p>
+</li>
+<li>
+<p><strong>信息视角</strong>：熵表示观测一个随机变量的结果所获得的平均信息量。高熵意味着高不确定性，因此观测结果带来更多信息；低熵意味着结果较为可预测，信息量较少。</p>
+</li>
+<li>
+<p><strong>编码树视角</strong>：对于二元编码，熵代表最优编码树的平均深度。频繁出现的符号用短码字（树的浅层），罕见符号用长码字（树的深层）。</p>
+</li>
+</ol>
+<p><strong>示例与直觉</strong>：</p>
+<p>考虑一个二元随机变量 $X \in \{0, 1\}$，$P(X=1) = p$。其熵为：
+$$H(X) = -p \log p - (1-p) \log(1-p) \triangleq H_b(p)$$
+这个函数称为<strong>二元熵函数</strong>（binary entropy function），在率失真理论中反复出现。让我们分析几个特殊情况：</p>
+<ul>
+<li>当 $p = 0.5$ 时：$H_b(0.5) = 1$ 比特。这是最大不确定性——抛硬币的场景，每次结果都无法预测，需要完整的1比特来编码。</li>
+<li>当 $p = 0.1$ 时：$H_b(0.1) \approx 0.47$ 比特。符号1很少出现，平均而言每个符号只需约0.47比特，因为大部分时候都是0（高度可预测）。</li>
+<li>当 $p = 0$ 或 $p = 1$ 时：$H_b(p) = 0$。完全确定的情况，不需要传输任何信息。</li>
+</ul>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>熵在均匀分布时达到最大值 $\log |\mathcal{X}|$（所有结果等可能，不确定性最大）</li>
+<li>熵在确定性分布时达到最小值 0（某个值概率为1，完全可预测）</li>
+<li>对于实际数据，熵通常远小于最大值——这正是压缩的空间所在</li>
+</ul>
+<h3 id="112">1.1.2 联合熵与条件熵</h3>
+<p>对于两个随机变量 $X$ 和 $Y$，<strong>联合熵</strong>定义为：
+$$H(X, Y) = -\sum_{x,y} p(x,y) \log p(x,y)$$
+<strong>条件熵</strong> $H(Y|X)$ 表示在已知 $X$ 的情况下 $Y$ 的平均不确定性：
+$$H(Y|X) = \sum_{x} p(x) H(Y|X=x) = -\sum_{x,y} p(x,y) \log p(y|x)$$
+<strong>链式法则</strong>：
+$$H(X, Y) = H(X) + H(Y|X) = H(Y) + H(X|Y)$$
+这个公式的直观解释是：两个变量的联合不确定性 = 第一个变量的不确定性 + 已知第一个变量后第二个变量的剩余不确定性。</p>
+<p><strong>深入理解条件熵</strong>：</p>
+<p>条件熵 $H(Y|X)$ 的两层含义：</p>
+<ol>
+<li><strong>外层平均</strong>：对所有可能的 $x$ 值求平均，权重是 $p(x)$</li>
+<li><strong>内层不确定性</strong>：对于每个固定的 $x = x_0$，计算 $H(Y|X=x_0) = -\sum_y p(y|x_0) \log p(y|x_0)$</li>
+</ol>
+<p><strong>关键不等式</strong>：
+$$H(Y|X) \leq H(Y)$$
+等号成立当且仅当 $X$ 和 $Y$ 独立。这个不等式的直观意义是：<strong>知道更多信息（$X$）不会增加不确定性，只会减少或保持不变</strong>。</p>
+<p><strong>具体例子</strong>：抛两次硬币</p>
+<p>设 $X$ 是第一次结果，$Y$ 是第二次结果，两次独立，均为公平硬币。</p>
+<ul>
+<li>$H(X) = H(Y) = 1$ 比特</li>
+<li>$H(X, Y) = 2$ 比特（四种等可能结果：00, 01, 10, 11）</li>
+<li>$H(Y|X) = 1$ 比特（知道第一次结果后，第二次仍是公平硬币）</li>
+<li>验证链式法则：$H(X, Y) = H(X) + H(Y|X) = 1 + 1 = 2$ ✓</li>
+</ul>
+<p><strong>反例</strong>：完全相关的情况</p>
+<p>设 $Y = X$（$Y$ 就是 $X$ 的拷贝），则：</p>
+<ul>
+<li>$H(Y|X) = 0$（一旦知道 $X$，$Y$ 完全确定，没有不确定性）</li>
+<li>$H(X, Y) = H(X)$（虽然有两个变量，但完全冗余，熵不增加）</li>
+<li>链式法则：$H(X, Y) = H(X) + H(Y|X) = H(X) + 0 = H(X)$ ✓</li>
+</ul>
+<p>这个例子在率失真理论中特别重要：如果重建 $\hat{X} = X$（完美重建），则 $H(\hat{X}|X) = 0$。</p>
+<h3 id="113">1.1.3 互信息：共享的信息</h3>
+<p><strong>互信息</strong>（Mutual Information）度量了两个随机变量之间的相关性：
+$$I(X; Y) = \sum_{x,y} p(x,y) \log \frac{p(x,y)}{p(x)p(y)}$$
+互信息有多种等价形式：
+$$I(X; Y) = H(X) - H(X|Y) = H(Y) - H(Y|X) = H(X) + H(Y) - H(X,Y)$$
+<strong>物理意义</strong>：$I(X; Y)$ 表示通过观测 $Y$ 能够减少的关于 $X$ 的不确定性，或者说 $X$ 和 $Y$ "共享"的信息量。</p>
+<p><strong>对称性</strong>：$I(X; Y) = I(Y; X)$，这是互信息的重要性质。</p>
+<p><strong>非负性</strong>：$I(X; Y) \geq 0$，当且仅当 $X$ 和 $Y$ 独立时等号成立。</p>
+<div class="codehilite"><pre><span></span><code>文氏图示意（ASCII）：
+         H(X)           H(Y)
+      ┌────────┐     ┌────────┐
+      │        │     │        │
+      │   H(X|Y)  I(X;Y)  H(Y|X) │
+      │        │     │        │
+      └────────┘     └────────┘
+         └──────┬──────┘
+            H(X,Y)
+</code></pre></div>
+
+<p><strong>互信息的多种解读</strong>：</p>
+<ol>
+<li>
+<p><strong>不确定性削减</strong>：$I(X; Y) = H(X) - H(X|Y)$
+   - 含义：观测 $Y$ 之前，$X$ 的不确定性是 $H(X)$；观测 $Y$ 之后，剩余不确定性是 $H(X|Y)$
+   - 互信息就是削减的部分：$\Delta H = H(X) - H(X|Y)$
+   - 例子：天气预报。$X$ 是明天真实天气，$Y$ 是天气预报的预测。如果预报准确，$H(X|Y)$ 会显著小于 $H(X)$，即 $I(X;Y)$ 大</p>
+</li>
+<li>
+<p><strong>KL散度形式</strong>：$I(X; Y) = D_{KL}(p(x,y) | p(x)p(y))$
+   - 含义：联合分布 $p(x,y)$ 与独立分布 $p(x)p(y)$ 之间的KL散度
+   - $X$ 和 $Y$ 越相关，联合分布越偏离独立假设，$I(X;Y)$ 越大
+   - 当 $X$ 和 $Y$ 独立时，$p(x,y) = p(x)p(y)$，故 $I(X;Y) = 0$</p>
+</li>
+<li>
+<p><strong>率失真视角</strong>：互信息作为"传输的信息量"
+   - 在通信系统中，如果发送 $X$，接收 $Y$，则 $I(X;Y)$ 是成功传输的信息量
+   - 在有损压缩中，如果原始符号是 $X$，重建是 $\hat{X}$，则 $I(X;\hat{X})$ 是需要传输的最小信息量</p>
+</li>
+</ol>
+<p><strong>具体例子</strong>：二元对称信道</p>
+<p>设 $X \in \{0,1\}$ 均匀分布，通过二元对称信道传输，交叉概率为 $p$（即 $P(Y=1|X=0)=P(Y=0|X=1)=p$）。</p>
+<ul>
+<li>当 $p = 0$（完美信道）：$Y = X$，故 $I(X;Y) = H(X) = 1$ 比特</li>
+<li>当 $p = 0.5$（完全噪声）：$Y$ 与 $X$ 独立，$I(X;Y) = 0$</li>
+<li>当 $p = 0.1$（轻微噪声）：$I(X;Y) \approx 0.53$ 比特（丢失了约 47% 的信息）</li>
+</ul>
+<p><strong>互信息与率失真的核心联系</strong>：</p>
+<p>在率失真理论中，$R(D) = \min I(X;\hat{X})$ 的定义直接使用了互信息。这是因为：</p>
+<ul>
+<li>编码器要传输足够信息让解码器重建 $\hat{X}$</li>
+<li>所需的最小信息量正是 $I(X;\hat{X})$</li>
+<li>通过选择不同的测试信道 $p(\hat{x}|x)$，可以控制 $I(X;\hat{X})$ 的大小</li>
+<li>失真约束限制了 $p(\hat{x}|x)$ 的选择范围</li>
+</ul>
+<h3 id="114">1.1.4 数据处理不等式</h3>
+<p><strong>数据处理不等式</strong>（Data Processing Inequality）是信息论的基本定理之一：</p>
+<p>如果随机变量形成马尔可夫链 $X \to Y \to Z$（即给定 $Y$，$X$ 和 $Z$ 条件独立），则：
+$$I(X; Z) \leq I(X; Y)$$
+<strong>直观理解</strong>：对数据的任何处理（$Y \to Z$）都不能增加信息。这个不等式在率失真理论中扮演重要角色。</p>
+<p><strong>马尔可夫链的含义</strong>：</p>
+<p>$X \to Y \to Z$ 表示：</p>
+<ul>
+<li>$X$ 影响 $Y$</li>
+<li>$Y$ 影响 $Z$</li>
+<li>但给定 $Y$ 之后，$X$ 和 $Z$ 条件独立，即 $p(z|x,y) = p(z|y)$</li>
+</ul>
+<p>这意味着 $Z$ 关于 $X$ 的所有信息都是通过 $Y$ 这个"中间环节"传递的，没有"绕过" $Y$ 的直接路径。</p>
+<p><strong>为什么信息不能增加？</strong></p>
+<p>直觉上：</p>
+<ul>
+<li>$Y$ 已经丢失了 $X$ 的一部分信息（除非 $Y$ 是 $X$ 的可逆函数）</li>
+<li>$Z$ 是从 $Y$ 计算得到的，最多能保留 $Y$ 中的所有信息</li>
+<li>因此 $Z$ 关于 $X$ 的信息不可能超过 $Y$ 关于 $X$ 的信息</li>
+</ul>
+<p>数学上：
+$$I(X; Z) = I(X; Y) - I(X; Y|Z) \leq I(X; Y)$$
+由于 $I(X; Y|Z) \geq 0$（互信息非负），不等式成立。</p>
+<p><strong>实际例子</strong>：</p>
+<ol>
+<li>
+<p><strong>通信链路</strong>：$X \to$ 编码 $\to Y \to$ 传输 $\to Z \to$ 解码 $\to \hat{X}$
+   - 每一步处理都可能丢失信息
+   - 最终 $I(X; \hat{X}) \leq I(X; Y)$
+   - 无法通过聪明的解码"恢复"已经在传输中丢失的信息</p>
+</li>
+<li>
+<p><strong>特征提取</strong>：原始数据 $X \to$ 特征 $Y \to$ 降维特征 $Z$
+   - 降维后的特征 $Z$ 包含的信息不可能超过原始特征 $Y$
+   - $I(X; Z) \leq I(X; Y)$</p>
+</li>
+<li>
+<p><strong>有损压缩链</strong>：$X \to$ 量化 $\to \hat{X} \to$ 再量化 $\to \hat{\hat{X}}$
+   - 二次量化不能恢复第一次量化丢失的信息
+   - $I(X; \hat{\hat{X}}) \leq I(X; \hat{X})$</p>
+</li>
+</ol>
+<p><strong>在率失真理论中的应用</strong>：</p>
+<p>数据处理不等式保证了：</p>
+<ul>
+<li>如果解码器只能看到编码后的索引 $M$，而不是原始信号 $X$</li>
+<li>那么重建 $\hat{X}$ 与 $X$ 的互信息 $I(X; \hat{X})$ 不会超过 $I(X; M)$</li>
+<li>马尔可夫链：$X \to M \to \hat{X}$，故 $I(X; \hat{X}) \leq I(X; M)$</li>
+<li>这意味着码率（由 $I(X; M)$ 决定）设置了重建质量的上限</li>
+</ul>
+<p><strong>Rule of thumb</strong>：信息处理只会丢失信息，不能创造信息。编码、压缩、传输等过程最多保持信息不变，通常会减少信息。任何数据处理流水线中，下游的信息不能超过上游。</p>
+<hr />
+<h2 id="12">1.2 有损压缩的基本问题</h2>
+<h3 id="121">1.2.1 无损压缩的局限</h3>
+<p>根据香农的无损编码定理，对信源 $X$ 进行无损压缩时，平均码长不能小于熵 $H(X)$。这是信息论的基本定理之一，它告诉我们存在一个无法逾越的理论下界。</p>
+<p><strong>为什么无损压缩不够用？</strong></p>
+<ol>
+<li>
+<p><strong>熵仍然太高</strong>：即使是最优的无损编码，许多自然信号的熵仍然很大。例如：
+   - 8位灰度图像：即使相邻像素高度相关，熵可能仍有5-7比特/像素
+   - 高清视频：即使利用时空冗余，无损压缩率通常只有2-4倍
+   - 高保真音频：CD质量音频（16位，44.1kHz）的熵约为12-14比特/样本</p>
+</li>
+<li>
+<p><strong>带宽和存储限制</strong>：实际应用中的约束往往严苛：
+   - 移动网络带宽：通常只有几Mbps，无法传输无损高清视频（需要100+ Mbps）
+   - 云存储成本：PB级数据的存储成本高昂，哪怕10%的压缩改进都意味着巨大节省
+   - 实时应用：视频会议、游戏串流需要极低延迟，无损编码的计算复杂度往往无法满足</p>
+</li>
+<li>
+<p><strong>人类感知的宽容性</strong>：关键洞察是，人类感知系统（视觉、听觉）并不需要完美重建：
+   - 视觉系统对高频细节不敏感
+   - 听觉系统有掩蔽效应（大声音掩盖小声音）
+   - 轻微失真通常不影响主观质量</p>
+</li>
+</ol>
+<p><strong>经典案例</strong>：</p>
+<ul>
+<li>JPEG图像压缩：相比无损PNG，在视觉上几乎无损的情况下，可以达到10-20倍压缩</li>
+<li>MP3音频：相比CD音质，在多数听众无法分辨的情况下，达到10倍压缩</li>
+<li>H.264视频：相比无损，在高质量下可达到50-100倍压缩</li>
+</ul>
+<p>这些成功案例的共同点是：<strong>接受一定失真，换取远超无损压缩的压缩率</strong>。这正是有损压缩和率失真理论的价值所在。</p>
+<h3 id="122">1.2.2 率失真问题的提出</h3>
+<p><strong>核心问题</strong>：在允许一定失真 $D$ 的情况下，对信源进行有损压缩所需的最小比特率是多少？</p>
+<p>这就是<strong>率失真理论</strong>要回答的基本问题。率失真理论研究的是<strong>率</strong>（Rate，压缩后的比特率）和<strong>失真</strong>（Distortion，压缩带来的质量损失）之间的根本权衡。</p>
+<p><strong>直观理解</strong>：</p>
+<ul>
+<li>如果我们要求完全无损（$D = 0$），则需要的比特率至少是 $H(X)$</li>
+<li>如果我们允许完全失真（比如把所有信号都压缩成常数），则比特率可以是 0</li>
+<li>在这两个极端之间，必然存在一条描述率失真权衡的曲线</li>
+</ul>
+<p><strong>率失真曲线的形状</strong>：</p>
+<p>对于大多数信源，率失真函数 $R(D)$ 是一条从 $(0, R(0)=H(X))$ 到 $(D_{\max}, R(D_{\max})=0)$ 的光滑递减凸曲线：</p>
+<div class="codehilite"><pre><span></span><code>码率 R
+  ^
+  |
+H(X)|●
+  |  ╲
+  |   ╲
+  |    ╲___
+  |        ╲___
+  |            ╲___
+  |                ╲___
+  0|__________________●___________&gt; 失真 D
+  0                D_max
+</code></pre></div>
+
+<p>关键观察：</p>
+<ul>
+<li><strong>左端点</strong>：$D=0$ 时，$R(0) = H(X)$（无损压缩极限）</li>
+<li><strong>右端点</strong>：$D = D_{\max}$ 时，$R(D_{\max}) = 0$（完全不传输信息，重建为固定值）</li>
+<li><strong>凸性</strong>：曲线是凸的（后续章节证明），意味着"性价比"递减</li>
+<li><strong>陡峭区域</strong>：在低失真区，码率随失真快速下降——轻微放宽质量要求可以大幅节省带宽</li>
+<li><strong>平缓区域</strong>：在高失真区，曲线趋于平缓——进一步降低质量带来的码率收益有限</li>
+</ul>
+<p><strong>工程意义</strong>：</p>
+<p>率失真曲线的"拐点"通常是最佳工作点：</p>
+<ul>
+<li>在拐点左侧（低失真），每减少一点失真需要付出大量码率</li>
+<li>在拐点右侧（高失真），每节省一点码率会严重损害质量</li>
+<li>实际系统（JPEG、H.264等）通常工作在拐点附近，平衡质量与带宽</li>
+</ul>
+<h3 id="123-">1.2.3 编码器-解码器框架</h3>
+<p>率失真编码的基本框架：</p>
+<div class="codehilite"><pre><span></span><code>    信源        编码器              解码器        重建
+    X^n  ───→  f_n: X^n → {1,...,M}  ───→  g_n: {1,...,M} → X̂^n  ───→  X̂^n
+                   (压缩)                        (解压)
+
+    码率 R = (log M) / n bits/symbol
+    失真 D = (1/n) Σ d(X_i, X̂_i)
+</code></pre></div>
+
+<ul>
+<li><strong>信源</strong>：产生长度为 $n$ 的序列 $X^n = (X_1, ..., X_n)$</li>
+<li><strong>编码器</strong> $f_n$：将 $X^n$ 映射到 $\{1, 2, ..., M\}$ 中的某个索引（码字）</li>
+<li><strong>解码器</strong> $g_n$：将索引映射回重建序列 $\hat{X}^n$</li>
+<li><strong>码率</strong>：$R = \frac{\log M}{n}$ 比特/符号（$M$ 个码字需要 $\log M$ 比特）</li>
+<li><strong>失真</strong>：$D = \frac{1}{n} \sum_{i=1}^n d(X_i, \hat{X}_i)$，其中 $d(\cdot, \cdot)$ 是失真度量</li>
+</ul>
+<p><strong>深入理解编解码框架的各个要素</strong>：</p>
+<ol>
+<li>
+<p><strong>码本（Codebook）</strong>：
+   - 解码器 $g_n$ 定义了一个码本：$\mathcal{C} = \{g_n(1), g_n(2), ..., g_n(M)\}$
+   - 这是 $M$ 个长度为 $n$ 的"代表序列"
+   - 编码过程就是找到最接近 $X^n$ 的代表序列
+   - 例子：VQ（矢量量化）的码本、JPEG的DCT系数量化表</p>
+</li>
+<li>
+<p><strong>码率 $R$ 的含义</strong>：
+   - $R = \frac{\log M}{n}$ 表示每个符号平均需要多少比特
+   - $M$ 是码本大小，$\log M$ 是索引所需的比特数
+   - $n$ 是块长度（序列长度）
+   - 例子：如果 $n=100$, $M=2^{300}$，则 $R = 300/100 = 3$ 比特/符号</p>
+</li>
+<li>
+<p><strong>块编码（Block Coding）的必要性</strong>：
+   - 为什么不逐符号编码，而是对长度 $n$ 的块编码？
+   - <strong>原因1</strong>：利用符号间的相关性。如果 $X_1, X_2, ...$ 相关，块编码可以联合处理
+   - <strong>原因2</strong>：率失真定理是渐近结果，只有当 $n \to \infty$ 时才能达到理论极限 $R(D)$
+   - <strong>原因3</strong>：典型序列方法需要足够长的序列来体现统计规律
+   - 实践中：$n$ 越大，性能越接近理论界，但复杂度也越高（指数增长）</p>
+</li>
+<li>
+<p><strong>编码器的设计原则</strong>：
+   - <strong>最近邻编码</strong>：$f_n(x^n) = \arg\min_{i \in \{1,...,M\}} d_n(x^n, g_n(i))$
+   - 即选择失真最小的码字索引
+   - 这种编码称为"最小失真编码"或"最近邻法则"</p>
+</li>
+<li>
+<p><strong>实际系统的两阶段设计</strong>：
+   - <strong>阶段1：源编码</strong>（对应编码器 $f_n$）</p>
+<ul>
+<li>量化/矢量量化：将 $X^n$ 映射到码字索引</li>
+<li><strong>阶段2：熵编码</strong>（进一步压缩索引）</li>
+<li>如果码字不是等概率的，可以用熵编码（Huffman、算术编码）进一步压缩索引</li>
+<li>理想情况下，阶段2可以将索引从 $\log M$ 比特压缩到接近 $H(\text{Index})$ 比特</li>
+<li>例子：JPEG = DCT变换 + 量化（阶段1）+ Huffman编码（阶段2）</li>
+</ul>
+</li>
+</ol>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>块长度 $n$ 的选择是性能与复杂度的权衡：$n$ 大则接近理论界但计算量大</li>
+<li>实际系统通常 $n = 8 \times 8$ (JPEG的DCT块) 到 $n = 64 \times 64$ (现代视频编码的CTU)</li>
+<li>码本大小 $M$ 决定了质量：$M$ 越大，可选代表序列越多，失真越小，但码率越高</li>
+</ul>
+<hr />
+<h2 id="13">1.3 失真度量的选择</h2>
+<p>失真度量 $d(x, \hat{x})$ 量化了原始符号 $x$ 和重建符号 $\hat{x}$ 之间的"差异"。不同应用需要不同的失真度量。</p>
+<h3 id="131">1.3.1 常见失真度量</h3>
+<ol>
+<li><strong>汉明失真（Hamming Distortion）</strong></li>
+</ol>
+<p>用于离散信源，定义为：
+$$d_H(x, \hat{x}) = \begin{cases} 0 &amp; \text{if } x = \hat{x} \\ 1 &amp; \text{if } x \neq \hat{x} \end{cases}$$
+<strong>适用场景</strong>：文本压缩、离散数据，关心的是"是否相等"而非"差多少"。</p>
+<p><strong>物理意义</strong>：</p>
+<ul>
+<li>平均汉明失真 = 错误概率 $P(X \neq \hat{X})$</li>
+<li>如果信源有 $|\mathcal{X}|$ 个符号，随机猜测的汉明失真约为 $1 - 1/|\mathcal{X}|$</li>
+<li>例子：二元信源，随机猜测的汉明失真 = 0.5</li>
+</ul>
+<ol start="2">
+<li><strong>平方误差失真（Squared Error Distortion）</strong></li>
+</ol>
+<p>用于连续或实值信源：
+$$d_{SE}(x, \hat{x}) = (x - \hat{x})^2$$
+对于向量信源 $\mathbf{x} \in \mathbb{R}^k$：
+$$d_{SE}(\mathbf{x}, \hat{\mathbf{x}}) = |\mathbf{x} - \hat{\mathbf{x}}|^2 = \sum_{i=1}^k (x_i - \hat{x}_i)^2$$
+这是最常用的失真度量，也称为<strong>均方误差</strong>（MSE, Mean Squared Error）。</p>
+<p><strong>适用场景</strong>：图像、音频、传感器数据等连续值信号。</p>
+<p><strong>为什么平方误差如此流行？</strong></p>
+<ol>
+<li><strong>数学可处理性</strong>：平方函数是光滑的、可微的、凸的，便于优化</li>
+<li><strong>高斯假设</strong>：如果噪声/误差服从高斯分布，MSE对应最大似然估计</li>
+<li><strong>能量解释</strong>：在信号处理中，平方误差对应能量损失</li>
+<li><strong>正交性</strong>：许多变换（如DCT、PCA）在MSE意义下具有优美性质</li>
+</ol>
+<p><strong>局限性</strong>：</p>
+<ul>
+<li>不符合人类感知：人眼对不同频率、不同区域的敏感度不同</li>
+<li>对离群值过度敏感：一个大误差会严重影响MSE</li>
+<li>无法区分结构失真与纹理失真</li>
+</ul>
+<ol start="3">
+<li><strong>绝对误差失真（Absolute Error Distortion）</strong>
+$$d_{AE}(x, \hat{x}) = |x - \hat{x}|$$
+相比平方误差，对大误差的惩罚较轻。</li>
+</ol>
+<p><strong>何时使用绝对误差？</strong></p>
+<ul>
+<li>数据中有离群值，不希望被过度惩罚</li>
+<li>对应拉普拉斯噪声假设（而非高斯）</li>
+<li>在鲁棒估计中更常用</li>
+</ul>
+<ol start="4">
+<li><strong>加权失真</strong></li>
+</ol>
+<p>某些维度或区域可能更重要，可以使用加权：
+$$d_W(\mathbf{x}, \hat{\mathbf{x}}) = \sum_{i=1}^k w_i (x_i - \hat{x}_i)^2$$
+<strong>应用实例</strong>：</p>
+<ul>
+<li><strong>频域加权</strong>：人眼对低频更敏感，DCT系数的量化步长应随频率增大</li>
+<li><strong>空间加权</strong>：图像中心比边缘重要，可以加大中心权重</li>
+<li><strong>色彩空间加权</strong>：在YCbCr中，亮度(Y)比色度(Cb, Cr)重要</li>
+</ul>
+<ol start="5">
+<li><strong>信噪比（SNR）与峰值信噪比（PSNR）</strong></li>
+</ol>
+<p>虽然不是失真度量本身，但在评估中常用：
+$$\text{SNR} = 10 \log_{10} \frac{\sigma_X^2}{\text{MSE}} \quad \text{(dB)}$$</p>
+<p>$$\text{PSNR} = 10 \log_{10} \frac{\text{MAX}^2}{\text{MSE}} \quad \text{(dB)}$$
+其中 $\text{MAX}$ 是信号的最大可能值（如8位图像为255）。</p>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>PSNR &gt; 40 dB：通常视为"高质量"，肉眼难以察觉失真</li>
+<li>PSNR 30-40 dB：中等质量，可察觉但可接受的失真</li>
+<li>PSNR &lt; 30 dB：低质量，明显的失真</li>
+</ul>
+<h3 id="132">1.3.2 失真度量的性质</h3>
+<p>一个好的失真度量通常应该满足：</p>
+<ol>
+<li><strong>非负性</strong>：$d(x, \hat{x}) \geq 0$</li>
+<li><strong>同一性</strong>：$d(x, x) = 0$</li>
+</ol>
+<p>注意失真度量<strong>不要求</strong>对称性（$d(x, \hat{x}) \neq d(\hat{x}, x)$）或三角不等式。</p>
+<p><strong>为什么不要求对称性？</strong></p>
+<p>在某些应用中，过估和低估的代价可能不同：</p>
+<ul>
+<li><strong>库存管理</strong>：高估需求（多备货）的代价 vs 低估需求（缺货）的代价不同</li>
+<li><strong>医疗诊断</strong>：假阳性 vs 假阴性的后果不同</li>
+<li><strong>金融预测</strong>：高估风险 vs 低估风险的损失不同</li>
+</ul>
+<p>例子：非对称失真函数
+$$d(x, \hat{x}) = \begin{cases}
+(x - \hat{x})^2 &amp; \text{if } \hat{x} \leq x \\
+2(x - \hat{x})^2 &amp; \text{if } \hat{x} &gt; x
+\end{cases}$$
+这个失真函数对"过估"（$\hat{x} &gt; x$）的惩罚是"低估"的两倍。</p>
+<p><strong>为什么不要求三角不等式？</strong></p>
+<p>三角不等式 $d(x, z) \leq d(x, y) + d(y, z)$ 对应度量空间的性质，但在率失真理论中并非必需。失真度量只需反映"差异程度"，不必定义一个度量空间。</p>
+<p><strong>理论要求 vs 实践选择</strong>：</p>
+<p>理论上：只要 $d(x, \hat{x}) \geq 0$ 和 $d(x,x)=0$，率失真理论的数学框架就成立。</p>
+<p>实践中：通常选择具有良好性质的失真度量（如凸性、可微性），便于算法设计和优化。</p>
+<h3 id="133">1.3.3 平均失真</h3>
+<p>对于长度为 $n$ 的序列，平均失真定义为：
+$$D = \frac{1}{n} \sum_{i=1}^n d(x_i, \hat{x}_i)$$
+由于 $X^n$ 和 $\hat{X}^n$ 是随机的，我们关心的是<strong>期望失真</strong>：
+$$\mathbb{E}[D] = \frac{1}{n} \sum_{i=1}^n \mathbb{E}[d(X_i, \hat{X}_i)]$$
+对于独立同分布（i.i.d.）信源，这简化为：
+$$\mathbb{E}[D] = \mathbb{E}[d(X, \hat{X})]$$
+<strong>期望的两层含义</strong>：</p>
+<ol>
+<li><strong>外层期望</strong>：对信源序列 $X^n$ 的随机性求期望</li>
+<li><strong>内层期望</strong>：如果编码是随机的（对应随机测试信道 $p(\hat{x}|x)$），对重建 $\hat{X}$ 的随机性也要求期望</li>
+</ol>
+<p>完整的期望失真：
+$$\mathbb{E}[d(X, \hat{X})] = \sum_{x,\hat{x}} p(x) p(\hat{x}|x) d(x, \hat{x})$$
+<strong>平均 vs 峰值失真</strong>：</p>
+<p>率失真理论主要关注平均失真（期望意义下），而不是峰值失真 $\max d(X, \hat{X})$。</p>
+<ul>
+<li><strong>平均失真</strong>：允许少数样本失真较大，只要整体平均可接受</li>
+<li><strong>峰值失真</strong>：要求所有样本的失真都不超过阈值，更严格但往往不现实</li>
+</ul>
+<p>例子：量化器设计</p>
+<ul>
+<li>平均失真准则：允许罕见的极端值被粗糙量化，优化常见值的量化精度</li>
+<li>峰值失真准则：所有值都必须满足失真约束，导致码率显著增加</li>
+</ul>
+<p><strong>Rule of thumb</strong>：失真度量的选择应该反映应用的实际需求。MSE 适合信号处理，但对于图像/视频，感知失真度量（如 SSIM）往往更合适（将在第五章详述）。在大多数实际系统中，使用平均失真（期望意义下）而非峰值失真，因为后者过于保守。</p>
+<hr />
+<h2 id="14">1.4 率失真函数的定义</h2>
+<h3 id="141-rd">1.4.1 率失真函数 $R(D)$</h3>
+<p>对于给定的失真水平 $D$，<strong>率失真函数</strong> $R(D)$ 定义为：
+$$R(D) = \min_{p(\hat{x}|x): \mathbb{E}[d(X,\hat{X})] \leq D} I(X; \hat{X})$$
+其中最小化是在所有满足平均失真约束的条件分布 $p(\hat{x}|x)$ 上进行的。</p>
+<p><strong>深入理解这个定义的每个组成部分</strong>：</p>
+<ol>
+<li>
+<p><strong>测试信道</strong> $p(\hat{x}|x)$：
+   - 这是一个条件概率分布，称为"测试信道"（test channel）或"再生信道"（reproduction channel）
+   - 它描述了给定原始符号 $x$ 时，如何（随机地）选择重建符号 $\hat{x}$
+   - "随机"是关键：最优编码可能不是确定性的！给定 $x$，可能以不同概率选择不同的 $\hat{x}$
+   - 测试信道不是物理信道，而是理论工具，描述编码-解码的联合统计行为</p>
+</li>
+<li>
+<p><strong>互信息</strong> $I(X; \hat{X})$ 作为"率"：
+   - $I(X; \hat{X})$ 度量了 $X$ 和 $\hat{X}$ 之间的相关程度
+   - 信息论解释：$I(X; \hat{X})$ 是从 $\hat{X}$ 能推断出关于 $X$ 的信息量
+   - 编码解释：要让解码器重建 $\hat{X}$，编码器至少需要传输 $I(X; \hat{X})$ 比特的信息
+   - 这里的"率"是信息率，不是数据率——实际传输需要加上熵编码开销</p>
+</li>
+<li>
+<p><strong>失真约束</strong> $\mathbb{E}[d(X,\hat{X})] \leq D$：
+   - 平均失真（期望意义下）不超过 $D$
+   - 注意是期望，不是最坏情况——某些样本可以失真很大，只要平均满足
+   - $D$ 是设计参数，由应用需求决定（质量要求 vs 带宽限制）</p>
+</li>
+<li>
+<p><strong>最小化</strong>：
+   - 在所有满足失真约束的测试信道中，找传输信息最少的那个
+   - 这是一个泛函优化问题（优化的是函数 $p(\hat{x}|x)$，而非有限维向量）
+   - 对偶地，可以理解为：在固定"信息预算" $I(X;\hat{X})$ 下，最小化失真</p>
+</li>
+</ol>
+<p><strong>为什么这个定义是"正确的"？</strong></p>
+<p>率失真函数捕捉了压缩的本质权衡：</p>
+<ul>
+<li>如果要求低失真（$D$ 小），则 $\hat{X}$ 必须与 $X$ 高度相关，即 $I(X;\hat{X})$ 大，需要高码率</li>
+<li>如果允许高失真（$D$ 大），则 $\hat{X}$ 可以丢弃 $X$ 的很多信息，$I(X;\hat{X})$ 小，码率低</li>
+<li>$R(D)$ 给出了这个权衡的"帕累托前沿"——在每个失真水平 $D$ 下，无法用更少的比特达到相同质量</li>
+</ul>
+<p><strong>与实际编码器的关系</strong>：</p>
+<p>实际的编码器（如JPEG、H.264）设计时，虽然不直接优化 $R(D)$，但核心思想一致：</p>
+<ul>
+<li>量化器对应测试信道 $p(\hat{x}|x)$（确定性量化是特殊情况）</li>
+<li>熵编码器使实际码率接近 $I(X;\hat{X})$</li>
+<li>量化步长控制失真 $D$</li>
+<li>整个系统在近似优化 $R(D)$</li>
+</ul>
+<h3 id="142">1.4.2 率失真定理（非正式陈述）</h3>
+<p>率失真定理告诉我们：</p>
+<p><strong>对于任意 $\epsilon &gt; 0$ 和足够大的 $n$</strong>，存在编码-解码方案 $(f_n, g_n)$ 使得：</p>
+<ul>
+<li>码率 $R \leq R(D) + \epsilon$</li>
+<li>平均失真 $\mathbb{E}[D] \leq D$</li>
+</ul>
+<p>并且不存在码率小于 $R(D)$ 的编码方案能达到失真 $D$。</p>
+<p><strong>意义</strong>：$R(D)$ 刻画了率失真权衡的理论极限。这是信息论给出的"基本界限"。</p>
+<p><strong>定理的两个方向</strong>：</p>
+<ol>
+<li>
+<p><strong>可达性（Achievability）</strong>：对于任意 $R &gt; R(D)$，存在编码方案达到失真 $D$
+   - 证明方法：随机编码（第二章详述）
+   - 关键思想：随机生成码本，证明平均意义下失真满足要求
+   - 渐近性：需要 $n \to \infty$，实际系统中 $n$ 有限会有性能损失</p>
+</li>
+<li>
+<p><strong>最优性（Converse）</strong>：对于任意 $R &lt; R(D)$，不存在编码方案能达到失真 $D$
+   - 证明方法：信息论不等式（数据处理不等式、Fano不等式等）
+   - 关键思想：信息量下界限制了可达到的失真</p>
+</li>
+</ol>
+<p><strong>与香农无损编码定理的对比</strong>：</p>
+<p>| 特性 | 无损编码定理 | 率失真定理 |</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>无损编码定理</th>
+<th>率失真定理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目标</td>
+<td>完美重建</td>
+<td>允许失真</td>
+</tr>
+<tr>
+<td>理论界</td>
+<td>$H(X)$</td>
+<td>$R(D)$</td>
+</tr>
+<tr>
+<td>约束</td>
+<td>$D = 0$</td>
+<td>$D \geq 0$</td>
+</tr>
+<tr>
+<td>应用</td>
+<td>zip, gzip</td>
+<td>JPEG, MP3</td>
+</tr>
+</tbody>
+</table>
+<p>两者都是渐近结果，都需要长块编码（$n \to \infty$）才能达到理论界。</p>
+<p><strong>实际意义</strong>：</p>
+<p>虽然率失真定理是渐近结果，但它为实际编码器提供了性能基准：</p>
+<ul>
+<li><strong>上界</strong>：任何实际编码器的率失真性能不可能超越 $R(D)$ 曲线</li>
+<li><strong>差距分析</strong>：实际编码器的 RD 曲线与 $R(D)$ 的距离反映了设计的优劣</li>
+<li><strong>优化目标</strong>：现代编码器（如VVC、AV1）努力逼近理论 $R(D)$</li>
+</ul>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>简单编码器（如标量量化）通常距离 $R(D)$ 有 3-6 dB 的损失</li>
+<li>矢量量化可以接近 $R(D)$，但复杂度高</li>
+<li>现代深度学习压缩在某些场景下已经非常接近 $R(D)$（特别是自然图像）</li>
+</ul>
+<h3 id="143">1.4.3 简单例子：二元对称源</h3>
+<p>考虑伯努利(0.5)源：$X \in \{0, 1\}$，$P(X=0) = P(X=1) = 0.5$，汉明失真。</p>
+<p>可以证明（详见第三章），其率失真函数为：
+$$R(D) = \begin{cases}
+1 - H_b(D) &amp; 0 \leq D \leq 0.5 \\
+0 &amp; D &gt; 0.5
+\end{cases}$$
+其中 $H_b(D) = -D \log D - (1-D) \log(1-D)$ 是二元熵函数。</p>
+<p><strong>解读</strong>：</p>
+<ul>
+<li>当 $D = 0$（无损）时，$R(0) = 1$ 比特，等于信源熵 $H(X) = 1$</li>
+<li>当 $D = 0.5$ 时，$R(0.5) = 0$，此时平均有一半的符号是错的，相当于随机猜测，不需要传输任何信息</li>
+<li>在中间，率和失真平滑地权衡</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>率失真曲线示意（ASCII）：
+R(D)
+ 1 |*
+   | <span class="gs">*</span>
+<span class="gs">   |  *</span>
+   |   <span class="gs">*</span>
+<span class="gs">0.5|    *</span>
+   |     <span class="gs">*</span>
+<span class="gs">   |      *</span>
+   |       *******
+ 0 |____________*______
+   0    0.25    0.5    D
+</code></pre></div>
+
+<p><strong>具体数值例子</strong>：</p>
+<p>| 失真 $D$ | 二元熵 $H_b(D)$ | 码率 $R(D)$ | 解释 |</p>
+<table>
+<thead>
+<tr>
+<th>失真 $D$</th>
+<th>二元熵 $H_b(D)$</th>
+<th>码率 $R(D)$</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.00</td>
+<td>0.00</td>
+<td>1.00</td>
+<td>完美重建，需要完整1比特</td>
+</tr>
+<tr>
+<td>0.01</td>
+<td>0.08</td>
+<td>0.92</td>
+<td>允许1%错误，节省8%码率</td>
+</tr>
+<tr>
+<td>0.10</td>
+<td>0.47</td>
+<td>0.53</td>
+<td>允许10%错误，节省47%码率</td>
+</tr>
+<tr>
+<td>0.20</td>
+<td>0.72</td>
+<td>0.28</td>
+<td>允许20%错误，节省72%码率</td>
+</tr>
+<tr>
+<td>0.50</td>
+<td>1.00</td>
+<td>0.00</td>
+<td>完全随机，无需传输信息</td>
+</tr>
+</tbody>
+</table>
+<p>观察：</p>
+<ul>
+<li>从 $D=0$ 到 $D=0.01$：失真仅增加 1%，但码率减少 8%（高效！）</li>
+<li>从 $D=0$ 到 $D=0.1$：失真增加 10%，码率减少 47%（性价比极高）</li>
+<li>从 $D=0.2$ 到 $D=0.5$：失真翻倍，但码率仅从 0.28 降到 0（收益递减）</li>
+</ul>
+<p><strong>最优测试信道的结构</strong>：</p>
+<p>对于二元对称源，最优测试信道 $p^*(\hat{x}|x)$ 也是对称的：
+$$p^*(\hat{x}=1|x=0) = p^*(\hat{x}=0|x=1) = D$$
+即：以概率 $D$ 翻转符号，以概率 $1-D$ 保持不变。这恰好对应二元对称信道！</p>
+<p><strong>深层洞察</strong>：</p>
+<ul>
+<li>率失真编码的最优策略是"有控制地引入错误"</li>
+<li>错误概率 $D$ 越大，需要传输的信息（码率）越少</li>
+<li>这与纠错编码形成有趣的对偶：纠错编码是"对抗无控制的错误"，率失真是"主动引入可控错误"</li>
+</ul>
+<p><strong>Rule of thumb</strong>：率失真函数 $R(D)$ 是单调递减的凸函数。失真允许越大，所需码率越小。对于许多信源，在低失真区域，轻微增加失真可以显著降低码率（"性价比"最高）。</p>
+<hr />
+<h2 id="15">1.5 率失真与互信息的联系</h2>
+<p>率失真函数的定义涉及互信息 $I(X; \hat{X})$。这不是巧合，而是深刻的联系：</p>
+<p><strong>互信息的意义</strong>：$I(X; \hat{X})$ 度量了从 $\hat{X}$ 能"推断"出多少关于 $X$ 的信息。在率失真编码中：</p>
+<ul>
+<li>编码器需要传输足够的信息让解码器能重建 $\hat{X}$</li>
+<li>为了使 $\hat{X}$ 接近 $X$（低失真），$\hat{X}$ 必须包含关于 $X$ 的足够信息</li>
+<li>但信息越多，需要的码率越高</li>
+</ul>
+<p>率失真函数的定义正是在这个权衡中找最优点：对于给定失真 $D$，找最小的互信息（即最小的码率）。</p>
+<p><strong>率失真函数的另一种形式</strong>：</p>
+<p>回忆定义：
+$$R(D) = \min_{p(\hat{x}|x): \mathbb{E}[d] \leq D} I(X; \hat{X})$$
+可以展开互信息：
+$$I(X; \hat{X}) = H(X) - H(X|\hat{X})$$
+因此：
+$$R(D) = H(X) - \max_{p(\hat{x}|x): \mathbb{E}[d] \leq D} H(X|\hat{X})$$
+解释：</p>
+<ul>
+<li>$H(X)$ 是信源的固有熵（常数）</li>
+<li>$H(X|\hat{X})$ 是给定重建 $\hat{X}$ 后，$X$ 的剩余不确定性</li>
+<li>率失真编码的目标是：在失真约束下，<strong>最大化剩余不确定性</strong> $H(X|\hat{X})$</li>
+<li>或等价地：<strong>最小化传输的信息</strong> $I(X; \hat{X})$</li>
+</ul>
+<p><strong>信息流的视角</strong>：</p>
+<p>考虑编码-传输-解码的完整过程：</p>
+<div class="codehilite"><pre><span></span><code>原始信源 X ──[编码]──&gt; 索引 M ──[信道]──&gt; 索引 M ──[解码]──&gt; 重建 X̂
+     |                      |                      |
+  H(X)比特              I(X;M)比特            I(X;X̂)比特
+</code></pre></div>
+
+<p>马尔可夫链：$X \to M \to \hat{X}$</p>
+<p>根据数据处理不等式：
+$$I(X; \hat{X}) \leq I(X; M)$$
+因此：</p>
+<ul>
+<li>重建质量（由 $I(X; \hat{X})$ 决定）不能超过传输的信息量 $I(X; M)$</li>
+<li>码率至少需要 $R \geq I(X; M) \geq I(X; \hat{X})$</li>
+<li>率失真函数 $R(D)$ 正是这个下界的紧化</li>
+</ul>
+<p><strong>优化问题的对偶形式</strong>：</p>
+<p>率失真函数的定义是一个约束优化问题：
+$$\min_{p(\hat{x}|x)} I(X; \hat{X}) \quad \text{s.t.} \quad \mathbb{E}[d(X,\hat{X})] \leq D$$
+对偶形式（使用拉格朗日乘数 $\lambda$）：
+$$\min_{p(\hat{x}|x)} \left\{ I(X; \hat{X}) + \lambda \mathbb{E}[d(X,\hat{X})] \right\}$$
+或等价地：
+$$\min_{p(\hat{x}|x)} \left\{ I(X; \hat{X}) + \lambda D \right\}$$
+这个对偶形式在实际优化算法（如 Blahut-Arimoto 算法，第四章）中非常有用。</p>
+<p><strong>与信息瓶颈（Information Bottleneck）的联系</strong>：</p>
+<p>信息瓶颈理论（Tishby et al.）研究的问题：
+$$\min_{p(\hat{x}|x)} I(X; \hat{X}) \quad \text{s.t.} \quad I(\hat{X}; Y) \geq I_{\min}$$</p>
+<p>其中 $Y$ 是标签或目标变量。这与率失真理论形式上非常相似：</p>
+<ul>
+<li>率失真：最小化 $I(X;\hat{X})$，约束失真</li>
+<li>信息瓶颈：最小化 $I(X;\hat{X})$，约束与 $Y$ 的互信息</li>
+</ul>
+<p>率失真理论可以看作信息瓶颈的特例（当 $Y$ 就是 $X$ 本身时）。</p>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>互信息 $I(X; \hat{X})$ 是率失真理论的核心量：它既是"率"又是"信息"</li>
+<li>失真越小，需要的互信息越大，码率越高</li>
+<li>在实际系统中，通过控制量化精度来调节 $I(X; \hat{X})$ 的大小</li>
+</ul>
+<hr />
+<h2 id="16">1.6 本章小结</h2>
+<p><strong>核心概念</strong>：</p>
+<ol>
+<li><strong>熵</strong> $H(X)$：信源的不确定性度量，无损压缩的理论下界</li>
+<li><strong>互信息</strong> $I(X; Y)$：两个随机变量共享的信息量，具有对称性和非负性</li>
+<li><strong>数据处理不等式</strong>：信息处理不能增加信息，只能减少或保持</li>
+<li><strong>率失真问题</strong>：在允许失真 $D$ 的情况下，有损压缩所需的最小码率是多少？</li>
+<li><strong>失真度量</strong>：量化原始信号和重建信号的差异，常见的有汉明失真和平方误差失真</li>
+<li><strong>率失真函数</strong>：$R(D) = \min_{p(\hat{x}|x): \mathbb{E}[d] \leq D} I(X; \hat{X})$，刻画率失真权衡的理论极限</li>
+</ol>
+<p><strong>关键公式</strong>：</p>
+<ul>
+<li>熵：$H(X) = -\sum_x p(x) \log p(x)$</li>
+<li>条件熵：$H(Y|X) = -\sum_{x,y} p(x,y) \log p(y|x)$</li>
+<li>互信息：$I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)$</li>
+<li>率失真函数：$R(D) = \min_{p(\hat{x}|x): \mathbb{E}[d(X,\hat{X})] \leq D} I(X; \hat{X})$</li>
+</ul>
+<hr />
+<h2 id="17">1.7 常见陷阱与错误</h2>
+<h3 id="gotcha-1">Gotcha #1: 混淆熵和率失真函数</h3>
+<p><strong>错误</strong>：认为 $R(D)$ 在 $D=0$ 时等于 $\log |\mathcal{X}|$。</p>
+<p><strong>正解</strong>：$R(0) = H(X)$，不是 $\log |\mathcal{X}|$。只有当 $X$ 均匀分布时两者才相等。熵 $H(X)$ 考虑了信源的概率分布，而 $\log |\mathcal{X}|$ 只是字母表大小。</p>
+<h3 id="gotcha-2">Gotcha #2: 失真度量必须是距离</h3>
+<p><strong>错误</strong>：认为失真度量必须满足对称性和三角不等式（即必须是距离度量）。</p>
+<p><strong>正解</strong>：失真度量只需满足非负性和 $d(x,x) = 0$。对称性和三角不等式不是必需的。例如，在某些应用中，过估（$\hat{x} &gt; x$）和低估（$\hat{x} &lt; x$）的代价可能不同，此时失真度量可以是非对称的。</p>
+<h3 id="gotcha-3-vs">Gotcha #3: 期望失真 vs 最大失真</h3>
+<p><strong>错误</strong>：将期望失真约束 $\mathbb{E}[d(X,\hat{X})] \leq D$ 与最坏情况约束 $\max d(X,\hat{X}) \leq D$ 混淆。</p>
+<p><strong>正解</strong>：率失真理论通常使用期望失真（平均意义下的失真）。最坏情况失真会导致不同的理论（worst-case distortion）。期望失真允许少数样本失真较大，只要平均失真不超过 $D$。</p>
+<h3 id="gotcha-4">Gotcha #4: 独立性假设</h3>
+<p><strong>错误</strong>：认为率失真理论只适用于 i.i.d. 信源。</p>
+<p><strong>正解</strong>：虽然经典结果（如第三章的伯努利源和高斯源）通常假设 i.i.d.，但率失真理论可以推广到具有记忆的信源（如马尔可夫源）。推广的关键是考虑序列的联合分布而非单符号分布。</p>
+<h3 id="gotcha-5">Gotcha #5: 率失真函数不可计算？</h3>
+<p><strong>错误</strong>：因为率失真函数的定义涉及无穷维优化（优化所有可能的条件分布 $p(\hat{x}|x)$），所以认为无法计算。</p>
+<p><strong>正解</strong>：对于许多重要的信源（如高斯源、伯努利源），率失真函数有闭式解。对于一般信源，Blahut-Arimoto 算法（第四章）提供了有效的数值计算方法。</p>
+<h3 id="gotcha-6">Gotcha #6: 码率单位</h3>
+<p><strong>错误</strong>：混淆"比特/符号"和"总比特数"。</p>
+<p><strong>正解</strong>：率失真函数 $R(D)$ 的单位是<strong>比特/符号</strong>（bits per symbol）。对于长度为 $n$ 的序列，总比特数约为 $nR(D)$。务必区分"每符号的平均比特数"和"总比特数"。</p>
+<hr />
+<p><strong>下一章预告</strong>：第二章将深入探讨率失真函数的数学性质（凸性、单调性），证明率失真定理，并揭示率失真理论与信道编码的对偶关系。</p>
+<p><a href="index.html">← 返回目录</a> | <a href="chapter2.html">第二章：率失真定理与理论性质 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="index.html" class="nav-link prev">← 率失真理论教程</a><a href="chapter2.html" class="nav-link next">第二章：率失真定理与理论性质 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

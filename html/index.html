@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>率失真理论教程</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item active" >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">率失真理论教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第一章：信息论基础与率失真入门</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第二章：率失真定理与理论性质</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第三章：经典信源的率失真函数</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第四章：率失真计算与矢量量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第五章：感知失真度量与率失真感知权衡</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第六章：图像与视频压缩中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第七章：字典学习与稀疏编码的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第八章：深度学习中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第九章：实践指南与应用案例</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="_1">率失真理论教程</h1>
+<h2 id="_2">教程简介</h2>
+<p>率失真理论（Rate-Distortion Theory）是信息论的核心分支之一，它研究在允许一定失真的条件下，对信源进行有损压缩所需的最小比特率。这一理论不仅是现代数据压缩技术的理论基础，也在机器学习、神经网络压缩、图像视频编码等领域发挥着重要作用。</p>
+<p>本教程面向有经验的程序员和AI科学家，以直观理解和实用公式为主，帮助读者快速掌握率失真理论的核心概念及其在实际问题中的应用。</p>
+<h2 id="_3">学习目标</h2>
+<ul>
+<li>理解率失真理论的基本概念和数学框架</li>
+<li>掌握常见信源的率失真函数计算方法</li>
+<li>了解率失真理论在实际压缩和机器学习中的应用</li>
+<li>建立信息论视角下的压缩问题直觉</li>
+</ul>
+<h2 id="_4">章节目录</h2>
+<h3 id="_5"><a href="chapter1.html">第一章：信息论基础与率失真入门</a></h3>
+<p>回顾信息论的核心概念（熵、联合熵、条件熵、互信息），引入率失真问题的基本设定、失真度量的选择、率失真函数的定义。通过简单例子建立直觉。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>信息论基础回顾：熵的物理意义、互信息的对称性、数据处理不等式</li>
+<li>率失真问题的提出：有损压缩的基本权衡</li>
+<li>失真度量的选择：汉明失真、平方误差失真等</li>
+<li>率失真函数 $R(D)$ 的定义</li>
+</ul>
+<hr />
+<h3 id="_6"><a href="chapter2.html">第二章：率失真定理与理论性质</a></h3>
+<p>探讨率失真函数的数学性质（凸性、单调性、连续性），阐述率失真定理的内容和意义，介绍典型序列证明思路，以及率失真理论与信道容量的对偶关系。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>率失真函数的性质：凸性、单调递减性、边界条件</li>
+<li>率失真定理：可达性、最优性、渐近等价性</li>
+<li>典型序列方法：联合典型序列、随机编码、覆盖引理</li>
+<li>率失真与信道容量的对偶：最小化 vs 最大化、有损压缩 vs 可靠传输</li>
+</ul>
+<hr />
+<h3 id="_7"><a href="chapter3.html">第三章：经典信源的率失真函数</a></h3>
+<p>详细计算两个最重要的信源：二元对称源（伯努利源）在汉明失真下的率失真函数，以及连续高斯源在均方误差失真下的率失真函数。推导经典公式并建立直觉。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>伯努利源：二元熵函数、汉明失真、显式 $R(D)$ 公式</li>
+<li>高斯源：水注入解释、逆反定理、$R(D) = \frac{1}{2}\log\frac{\sigma^2}{D}$</li>
+<li>两种信源的物理意义和实际应用</li>
+</ul>
+<hr />
+<h3 id="_8"><a href="chapter4.html">第四章：率失真计算与矢量量化</a></h3>
+<p>介绍 Blahut-Arimoto 算法等数值方法，用于计算没有闭式解的信源的率失真函数。扩展到多维信源，介绍矢量量化的基本思想及其与率失真理论的联系。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>Blahut-Arimoto 算法：迭代优化、KL 散度、收敛性</li>
+<li>数值计算技巧与实现要点</li>
+<li>矢量量化：Lloyd-Max 算法、码本设计、维度的增益</li>
+<li>标量量化 vs 矢量量化的性能对比</li>
+</ul>
+<hr />
+<h3 id="_9"><a href="chapter5.html">第五章：感知失真度量与率失真感知权衡</a></h3>
+<p>讨论超越 MSE 的失真度量：感知失真、SSIM、学习的失真度量等。探讨现代生成模型中的率失真感知（Rate-Distortion-Perception）三角权衡理论。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>感知失真度量：人类视觉系统、SSIM、LPIPS</li>
+<li>传统失真度量的局限性</li>
+<li>率失真感知（RDP）权衡：感知约束、生成对抗网络、不可能三角</li>
+<li>感知质量与失真的权衡</li>
+</ul>
+<hr />
+<h3 id="_10"><a href="chapter6.html">第六章：图像与视频压缩中的率失真</a></h3>
+<p>率失真理论在实际图像/视频编码标准（JPEG、H.264、H.265、AV1）中的体现和应用。理解编码标准如何将理论转化为实践。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>DCT 变换与能量压缩</li>
+<li>量化表设计的率失真考量</li>
+<li>率失真优化（RDO）在视频编码中的应用</li>
+<li>现代编码标准的率失真性能</li>
+</ul>
+<hr />
+<h3 id="_11"><a href="chapter7.html">第七章：字典学习与稀疏编码的率失真</a></h3>
+<p>用率失真理论解读字典学习和稀疏编码：稀疏性对应"率"，重建误差对应"失真"。理解过完备表示、稀疏正则化、字典优化算法的信息论本质。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>字典学习基本框架：过完备字典、稀疏表示</li>
+<li>率失真视角：$\ell_0$//$\ell_1$ 正则化与码率、重建误差与失真</li>
+<li>稀疏字典学习算法：K-SVD、MOD、在线字典学习</li>
+<li>稀疏编码的率失真权衡：稀疏度 vs 重建质量</li>
+<li>应用实例：图像去噪、特征提取、压缩感知</li>
+</ul>
+<hr />
+<h3 id="_12"><a href="chapter8.html">第八章：深度学习中的率失真</a></h3>
+<p>率失真理论在神经网络压缩、变分自编码器（VAE）、神经压缩（Neural Compression）、信息瓶颈理论中的应用。探索深度学习如何重新诠释率失真理论。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>从字典学习到深度学习：非线性字典、端到端学习</li>
+<li>变分自编码器（VAE）的率失真解释：β-VAE、ELBO 的率失真分解</li>
+<li>信息瓶颈理论：表示学习的率失真视角</li>
+<li>神经压缩：学习的压缩表示、端到端优化、熵编码</li>
+<li>深度学习模型压缩的率失真权衡</li>
+</ul>
+<hr />
+<h3 id="_13"><a href="chapter9.html">第九章：实践指南与应用案例</a></h3>
+<p>汇总率失真理论在实际工程问题中的应用策略、调试技巧和经验法则。提供具体案例和最佳实践指导。</p>
+<p><strong>关键内容</strong>：</p>
+<ul>
+<li>工程实践中的率失真权衡：参数选择、性能评估</li>
+<li>常见应用场景：流媒体、存储优化、实时通信</li>
+<li>调试技巧：如何分析率失真曲线、识别瓶颈</li>
+<li>经验法则（rules of thumb）汇总</li>
+<li>从字典学习到深度学习：方法选择与实战建议</li>
+</ul>
+<hr />
+<h2 id="_14">如何使用本教程</h2>
+<ol>
+<li><strong>顺序阅读</strong>：建议按章节顺序学习，每章都基于前面的知识</li>
+<li><strong>关注直觉</strong>：每章的 rule-of-thumb 提供实用判断标准</li>
+<li><strong>注意陷阱</strong>：每章末尾的 Gotchas 总结了常见错误</li>
+<li><strong>动手计算</strong>：虽然无代码，但建议读者手算示例以加深理解</li>
+</ol>
+<h2 id="_15">符号约定</h2>
+<ul>
+<li>$X, Y, Z$：随机变量</li>
+<li>$\mathcal{X}, \mathcal{Y}$：字母表（取值空间）</li>
+<li>$H(X)$：熵</li>
+<li>$I(X;Y)$：互信息</li>
+<li>$D$：失真水平</li>
+<li>$R(D)$：率失真函数</li>
+<li>$d(x,\hat{x})$：失真度量</li>
+<li>$\mathbb{E}[\cdot]$：期望</li>
+</ul>
+<h2 id="_16">参考文献</h2>
+<p>本教程主要参考以下经典著作：</p>
+<ul>
+<li>Cover &amp; Thomas, <em>Elements of Information Theory</em></li>
+<li>Berger, <em>Rate Distortion Theory</em></li>
+<li>Gallager, <em>Information Theory and Reliable Communication</em></li>
+</ul>
+<hr />
+<p><strong>开始学习</strong>：<a href="chapter1.html">第一章：信息论基础与率失真入门 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter1.html" class="nav-link next">第一章：信息论基础与率失真入门 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

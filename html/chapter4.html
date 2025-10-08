@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第四章：率失真计算与矢量量化</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">率失真理论教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第一章：信息论基础与率失真入门</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第二章：率失真定理与理论性质</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第三章：经典信源的率失真函数</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第四章：率失真计算与矢量量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第五章：感知失真度量与率失真感知权衡</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第六章：图像与视频压缩中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第七章：字典学习与稀疏编码的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第八章：深度学习中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第九章：实践指南与应用案例</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="_1">第四章：率失真计算与矢量量化</h1>
+<p>本章介绍如何数值计算没有闭式解的率失真函数，重点是Blahut-Arimoto算法。我们还将扩展到多维信源，介绍矢量量化的基本原理及其与率失真理论的深刻联系。这些内容将率失真理论从解析结果推广到一般实用场景。</p>
+<p><strong>学习目标</strong>：</p>
+<ul>
+<li>掌握Blahut-Arimoto算法的原理和实现要点</li>
+<li>理解矢量量化的优势和设计方法</li>
+<li>了解Lloyd-Max算法的率失真解释</li>
+<li>建立标量量化与矢量量化的性能对比直觉</li>
+</ul>
+<hr />
+<h2 id="41-blahut-arimoto">4.1 Blahut-Arimoto算法</h2>
+<h3 id="411">4.1.1 问题回顾</h3>
+<p>率失真函数的定义：</p>
+<p>$$R(D) = \min_{p(\hat{x}|x): \mathbb{E}[d(X,\hat{X})] \leq D} I(X; \hat{X})$$
+对于一般的信源分布 $p(x)$ 和失真函数 $d(x,\hat{x})$，这个优化问题没有闭式解。Blahut-Arimoto算法提供了迭代数值求解方法。</p>
+<h3 id="412">4.1.2 拉格朗日形式</h3>
+<p>引入拉格朗日乘子 $\beta \geq 0$，将约束优化转化为无约束优化：
+$$F(\beta) = \min_{p(\hat{x}|x)} \left[ I(X; \hat{X}) + \beta \mathbb{E}[d(X, \hat{X})] \right]$$
+<strong>关系</strong>：参数 $\beta$ 控制率失真权衡的工作点</p>
+<ul>
+<li>$\beta = 0$：只关心率，最优解是 $p(\hat{x}|x) = p(\hat{x})$（独立），失真最大</li>
+<li>$\beta \to \infty$：只关心失真，最优解趋向无损（$\hat{X} = X$）</li>
+</ul>
+<p>通过变化 $\beta$，可以得到整条率失真曲线 $R(D)$。</p>
+<h3 id="413">4.1.3 算法推导</h3>
+<p>将互信息展开：
+$$I(X;\hat{X}) = \sum_{x,\hat{x}} p(x) p(\hat{x}|x) \log \frac{p(\hat{x}|x)}{p(\hat{x})}$$
+其中 $p(\hat{x}) = \sum_x p(x) p(\hat{x}|x)$。</p>
+<p>目标函数为：
+$$F = \sum_{x,\hat{x}} p(x) p(\hat{x}|x) \left[\log \frac{p(\hat{x}|x)}{p(\hat{x})} + \beta d(x,\hat{x})\right]$$
+使用变分法，令 $\frac{\partial F}{\partial p(\hat{x}|x)} = 0$（加上归一化约束），得到最优解的形式：
+$$p^*(\hat{x}|x) = \frac{p(\hat{x}) \exp[-\beta d(x,\hat{x})]}{\sum_{\hat{x}'} p(\hat{x}') \exp[-\beta d(x,\hat{x}')]}$$
+定义 $Z(x,\beta) = \sum_{\hat{x}'} p(\hat{x}') \exp[-\beta d(x,\hat{x}')]$，则：
+$$p^*(\hat{x}|x) = \frac{p(\hat{x}) \exp[-\beta d(x,\hat{x})]}{Z(x,\beta)}$$
+这是一个<strong>自洽方程</strong>：$p(\hat{x}|x)$ 依赖于 $p(\hat{x})$，而 $p(\hat{x})$ 又依赖于 $p(\hat{x}|x)$。</p>
+<p><strong>更深入的理解</strong>：</p>
+<p>这个最优解的形式有深刻的物理和信息论意义：</p>
+<ol>
+<li>
+<p><strong>玻尔兹曼分布的类比</strong>：形式 $\exp[-\beta d(x,\hat{x})]$ 类似于统计物理中的玻尔兹曼分布 $\exp[-E/kT]$，其中 $\beta$ 对应"逆温度"$1/T$，失真 $d(x,\hat{x})$ 对应"能量"$E$。
+   - $\beta$ 小（高温）：分布接近均匀，容忍大失真
+   - $\beta$ 大（低温）：分布集中在低失真的 $\hat{x}$ 上</p>
+</li>
+<li>
+<p><strong>软量化 vs 硬量化</strong>：
+   - 当 $\beta \to \infty$：$p(\hat{x}|x)$ 退化为 $\delta$ 函数，集中在失真最小的 $\hat{x}$（确定性量化）
+   - 有限 $\beta$：$p(\hat{x}|x)$ 是软分布，以概率方式选择 $\hat{x}$（随机量化）</p>
+</li>
+<li>
+<p><strong>先验 $p(\hat{x})$ 的作用</strong>：
+   - $p(\hat{x})$ 大 → 该重建点更"受欢迎" → $p(\hat{x}|x)$ 倾向选择它
+   - 这体现了"频繁使用的码字应该对应更多的信源值"的直觉
+   - 在信息论中，这对应于码字的先验概率，影响平均码长</p>
+</li>
+</ol>
+<p><strong>为什么这个形式是最优的？</strong></p>
+<p>通过拉格朗日乘子法的KKT条件可以严格推导。核心思想是：在满足归一化约束 $\sum_{\hat{x}} p(\hat{x}|x) = 1$ 下，目标函数关于每个 $p(\hat{x}|x)$ 的梯度为零。具体计算：
+$$\frac{\partial}{\partial p(\hat{x}|x)} \left[p(x) p(\hat{x}|x) \left(\log \frac{p(\hat{x}|x)}{p(\hat{x})} + \beta d(x,\hat{x})\right)\right] = p(x) \left[\log \frac{p(\hat{x}|x)}{p(\hat{x})} + 1 + \beta d(x,\hat{x})\right]$$
+令其等于拉格朗日乘子 $\lambda(x)$（对应归一化约束），解出：
+$$\log p(\hat{x}|x) = \lambda(x) - 1 - \beta d(x,\hat{x}) + \log p(\hat{x})$$
+即：
+$$p(\hat{x}|x) = p(\hat{x}) \exp[\lambda(x) - 1 - \beta d(x,\hat{x})]$$
+利用归一化条件 $\sum_{\hat{x}} p(\hat{x}|x) = 1$，确定 $\lambda(x)$：
+$$\exp[\lambda(x) - 1] = \frac{1}{\sum_{\hat{x}'} p(\hat{x}') \exp[-\beta d(x,\hat{x}')]} = \frac{1}{Z(x,\beta)}$$
+代入即得最优解。</p>
+<h3 id="414-blahut-arimoto">4.1.4 Blahut-Arimoto迭代</h3>
+<p><strong>算法流程</strong>（给定 $\beta$）：</p>
+<ol>
+<li><strong>初始化</strong>：选择初始分布 $p^{(0)}(\hat{x})$（如均匀分布）</li>
+<li><strong>迭代</strong> $t = 0, 1, 2, ...$：
+   - <strong>E步</strong>：根据当前 $p^{(t)}(\hat{x})$ 计算
+$$p^{(t)}(\hat{x}|x) = \frac{p^{(t)}(\hat{x}) \exp[-\beta d(x,\hat{x})]}{\sum_{\hat{x}'} p^{(t)}(\hat{x}') \exp[-\beta d(x,\hat{x}')]}$$</li>
+</ol>
+<ul>
+<li><strong>M步</strong>：更新边缘分布
+$$p^{(t+1)}(\hat{x}) = \sum_x p(x) p^{(t)}(\hat{x}|x)$$</li>
+</ul>
+<ol start="3">
+<li><strong>收敛判断</strong>：当 $|p^{(t+1)}(\hat{x}) - p^{(t)}(\hat{x})| &lt; \epsilon$ 时停止</li>
+</ol>
+<p><strong>输出</strong>：收敛后的 $p^*(\hat{x}|x)$，计算 $R = I(X;\hat{X})$ 和 $D = \mathbb{E}[d(X,\hat{X})]$，得到率失真曲线上的一个点 $(R, D)$。</p>
+<p><strong>扫描 $\beta$</strong>：通过改变 $\beta$ 从 $0$ 到 $\infty$，得到完整的率失真曲线。</p>
+<h3 id="415">4.1.5 收敛性和性质</h3>
+<p><strong>定理</strong>：Blahut-Arimoto算法保证收敛到全局最优解。</p>
+<p><strong>收敛速度</strong>：通常几十次迭代即可收敛，收敛是线性的。</p>
+<p><strong>计算复杂度</strong>：每次迭代 $O(|\mathcal{X}| \cdot |\hat{\mathcal{X}}|)$，其中 $|\mathcal{X}|$ 和 $|\hat{\mathcal{X}}|$ 分别是信源和重建的字母表大小。</p>
+<p><strong>Rule of thumb</strong>：Blahut-Arimoto算法是计算一般信源率失真函数的标准方法。对于离散信源，只要字母表不太大（&lt; 100），算法都很高效。</p>
+<h3 id="416">4.1.6 数值技巧</h3>
+<p><strong>1. 对数空间计算</strong>：为避免下溢，用 $\log p(\hat{x})$ 代替 $p(\hat{x})$：
+$$\log p(\hat{x}|x) = \log p(\hat{x}) - \beta d(x,\hat{x}) - \log Z(x,\beta)$$
+其中 $\log Z(x,\beta) = \text{LogSumExp}_{\hat{x}} [\log p(\hat{x}) - \beta d(x,\hat{x})]$。</p>
+<p><strong>2. $\beta$ 的选择</strong>：使用对数尺度，如 $\beta \in \{10^{-3}, 10^{-2}, ..., 10^3\}$，在率失真曲线的不同区域取足够密的点。</p>
+<p><strong>3. 初始化</strong>：从 $\beta$ 小的点开始，用前一个 $\beta$ 的收敛解作为下一个 $\beta$ 的初始值，加速收敛。</p>
+<hr />
+<h2 id="42">4.2 矢量量化基础</h2>
+<h3 id="421">4.2.1 从标量到矢量</h3>
+<p><strong>标量量化</strong>：每次量化一个样本 $x \in \mathbb{R}$
+$$\hat{x} = Q(x) \in \{\hat{x}_1, ..., \hat{x}_M\}$$
+<strong>矢量量化</strong>（Vector Quantization, VQ）：每次量化一个向量 $\mathbf{x} \in \mathbb{R}^k$
+$$\hat{\mathbf{x}} = Q(\mathbf{x}) \in \{\mathbf{c}_1, ..., \mathbf{c}_M\}$$
+其中 $\\{\mathbf{c}_1, ..., \mathbf{c}_M\\}$ 称为<strong>码本</strong>（codebook），$\mathbf{c}_i$ 称为<strong>码字</strong>或<strong>代表点</strong>。</p>
+<p><strong>编码</strong>：找最近的码字（最近邻规则）
+$$Q(\mathbf{x}) = \arg\min_{\mathbf{c}_i} |\mathbf{x} - \mathbf{c}_i|^2$$
+<strong>码率</strong>：$R = \frac{\log M}{k}$ 比特/样本</p>
+<h3 id="422">4.2.2 矢量量化的优势</h3>
+<p><strong>为什么矢量量化更好？</strong></p>
+<p><strong>定理</strong>（Shannon）：对于给定码率 $R$，当向量维度 $k \to \infty$ 时，矢量量化的失真逼近率失真函数 $R(D)$。而标量量化的失真通常严格大于 $R(D)$。</p>
+<p><strong>直观解释</strong>：</p>
+<ol>
+<li><strong>联合建模</strong>：矢量量化利用向量分量之间的相关性</li>
+<li><strong>形状适配</strong>：码字可以适应信源在高维空间的分布形状</li>
+<li><strong>维度增益</strong>：高维空间的"集中现象"（典型集）使量化更有效</li>
+</ol>
+<p><strong>具体示例分析</strong>：</p>
+<p>考虑二维均匀分布源 $\mathbf{X} = (X_1, X_2)$，$X_1, X_2 \in [-1, 1]$ 独立均匀分布。码率 $R = 1$ 比特/样本（即 2 比特/向量）。</p>
+<p><strong>标量量化方案</strong>：</p>
+<p>分别量化 $X_1$ 和 $X_2$，每个使用 $M=2$ 个量化点（1 比特）：</p>
+<ul>
+<li>$X_1$ 的量化点：$\{-0.5, 0.5\}$</li>
+<li>$X_2$ 的量化点：$\{-0.5, 0.5\}$</li>
+<li>总共 $2 \times 2 = 4$ 个码字（2D网格）</li>
+</ul>
+<p>量化误差（均方）：
+$$D_{\text{scalar}} = \mathbb{E}[(X_1 - \hat{X}_1)^2] + \mathbb{E}[(X_2 - \hat{X}_2)^2]$$
+对于均匀分布在 $[-1, 1]$ 上，用 2 个量化点，每个区域宽度为 1，均方误差约为 $\frac{1}{12}$（区间宽度平方/12）。因此：
+$$D_{\text{scalar}} \approx 2 \times \frac{1}{12} = \frac{1}{6} \approx 0.167$$
+<strong>矢量量化方案</strong>：</p>
+<p>联合量化 $(X_1, X_2)$，使用 $M=4$ 个 2D 码字。最优放置（对均匀分布）是六边形排列或均匀分布的 4 个点。</p>
+<p>例如，使用以下 4 个码字（近似最优）：</p>
+<ul>
+<li>$\mathbf{c}_1 = (-0.5, -0.5)$</li>
+<li>$\mathbf{c}_2 = (-0.5, 0.5)$</li>
+<li>$\mathbf{c}_3 = (0.5, -0.5)$</li>
+<li>$\mathbf{c}_4 = (0.5, 0.5)$</li>
+</ul>
+<p>这看起来和标量量化一样？但关键区别是：<strong>矢量量化可以优化码字位置以最小化失真</strong>。</p>
+<p>对于均匀分布，最优的 4 点配置实际上是正方形的顶点（等间距）。失真计算：
+$$D_{\text{vector}} \approx \frac{1}{6}$$
+等等，这个例子中标量和矢量性能相同，因为分量独立且分布相同。让我换一个更好的例子。</p>
+<p><strong>更好的示例：相关高斯源</strong></p>
+<p>考虑二维高斯源 $\mathbf{X} = (X_1, X_2)$ 满足 $X_1, X_2 \sim \mathcal{N}(0, 1)$，但<strong>相关</strong>：$\text{Cov}(X_1, X_2) = \rho$（$\rho &gt; 0$）。</p>
+<p>信源在 2D 空间形成椭圆分布，主轴沿对角线方向。</p>
+<p><strong>标量量化</strong>：</p>
+<ul>
+<li>分别量化 $X_1$ 和 $X_2$，忽略相关性</li>
+<li>码字形成正方形网格</li>
+<li>失真：$D_{\text{scalar}}$（忽略了协方差结构）</li>
+</ul>
+<p><strong>矢量量化</strong>：</p>
+<ul>
+<li>码字可以沿椭圆的主轴方向排列</li>
+<li>更密集地覆盖高概率区域（椭圆中心）</li>
+<li>失真：$D_{\text{vector}} &lt; D_{\text{scalar}}$</li>
+</ul>
+<p><strong>量化增益</strong>：</p>
+<p>对于高斯源，当 $k=2$ 时，矢量量化相比标量量化的增益约为：
+$$G_{k=2} \approx 0.5 \text{ dB}$$
+当 $k \to \infty$ 时，增益达到：
+$$G_{k \to \infty} = \frac{\pi e}{6} \approx 2.2 \text{ dB}$$
+这就是"形状增益"（shape gain），来源于矢量量化能够适应信源分布的形状。</p>
+<p><strong>维度增益的直观理解</strong>：</p>
+<p>在高维空间，信源分布集中在一个"薄壳"上（典型集）。矢量量化可以精确覆盖这个薄壳，而标量量化必须覆盖整个超立方体，浪费了大量码字在低概率区域。</p>
+<div class="codehilite"><pre><span></span><code><span class="mf">2</span><span class="n">D示意</span><span class="err">（</span><span class="n">高斯分布</span><span class="err">）：</span>
+
+<span class="w">    </span><span class="n">X2</span>
+<span class="w">     </span><span class="err">|</span><span class="w">     </span><span class="err">·····</span><span class="w">     </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">高概率区域</span><span class="err">（</span><span class="n">椭圆</span><span class="err">）</span>
+<span class="w">     </span><span class="err">|</span><span class="w">   </span><span class="err">··</span><span class="w">   </span><span class="err">··</span>
+<span class="w">     </span><span class="err">|</span><span class="w">  </span><span class="err">·</span><span class="w">   </span><span class="o">*</span><span class="w">   </span><span class="err">·</span><span class="w">    </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">矢量量化码字</span><span class="err">（</span><span class="n">沿椭圆分布</span><span class="err">）</span>
+<span class="w">     </span><span class="err">|</span><span class="w"> </span><span class="err">·</span><span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="o">*</span><span class="w">   </span><span class="err">·</span>
+<span class="w">     </span><span class="o">+--</span><span class="err">·</span><span class="o">-*-*-*-</span><span class="err">·</span><span class="o">---</span><span class="w"> </span><span class="n">X1</span>
+<span class="w">       </span><span class="err">·</span><span class="w">   </span><span class="o">*</span><span class="w"> </span><span class="o">*</span><span class="w">   </span><span class="err">·</span>
+<span class="w">        </span><span class="err">·</span><span class="w">   </span><span class="o">*</span><span class="w">   </span><span class="err">·</span>
+<span class="w">         </span><span class="err">··</span><span class="w">   </span><span class="err">··</span>
+<span class="w">           </span><span class="err">·····</span>
+
+<span class="w">    </span><span class="n">网格点</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">标量量化</span><span class="err">（</span><span class="n">忽略椭圆形状</span><span class="err">）</span>
+
+<span class="w">    </span><span class="o">*</span><span class="w"> </span><span class="n">点</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">矢量量化</span><span class="err">（</span><span class="n">适应椭圆形状</span><span class="err">）</span>
+</code></pre></div>
+
+<p><strong>Rule of thumb</strong>：矢量量化相比标量量化，在相同码率下可以降低失真约 $\frac{1}{2}\log(2\pi e) \approx 1.5$ 比特/维（对高斯源）。这称为"形状增益"。对于相关源或非均匀分布，增益更加显著。</p>
+<h3 id="423-voronoi">4.2.3 量化区域与Voronoi分割</h3>
+<p>给定码本 $\\{\mathbf{c}_1, ..., \mathbf{c}_M\\}$，量化器将空间分割为 $M$ 个区域：
+$$V_i = \\{\mathbf{x} : Q(\mathbf{x}) = \mathbf{c}_i\\} = \\{\mathbf{x} : |\mathbf{x} - \mathbf{c}_i|^2 \leq |\mathbf{x} - \mathbf{c}_j|^2, \forall j \neq i\\}$$
+这些区域称为<strong>Voronoi区域</strong>，它们构成<strong>Voronoi图</strong>。</p>
+<p><strong>性质</strong>：</p>
+<ul>
+<li>Voronoi区域是凸多面体</li>
+<li>相邻区域的边界是超平面</li>
+<li>最近邻规则等价于Voronoi分割</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>二维Voronoi图示意（ASCII）：
+           |     /
+    V1     |    / V2
+           | c1/
+      -----+---+----
+          /|   |c2
+         / |   |
+        /  |V3 |
+       / V4|   |
+</code></pre></div>
+
+<hr />
+<h2 id="43-lloyd-max">4.3 Lloyd-Max算法</h2>
+<h3 id="431">4.3.1 问题设定</h3>
+<p><strong>目标</strong>：给定信源分布 $p(\mathbf{x})$、码本大小 $M$，设计最优码本 $\\{\mathbf{c}_1, ..., \mathbf{c}_M\\}$ 使平均失真最小：
+$$\min_{\mathbf{c}_1,...,\mathbf{c}_M} \mathbb{E}[|\mathbf{X} - Q(\mathbf{X})|^2]$$</p>
+<h3 id="432-lloydk-means">4.3.2 Lloyd算法（K-means）</h3>
+<p><strong>Lloyd算法</strong>（也称为LBG算法、K-means聚类）是矢量量化码本设计的经典方法：</p>
+<ol>
+<li><strong>初始化</strong>：随机选择 $M$ 个码字 $\\{\mathbf{c}_1^{(0)}, ..., \mathbf{c}_M^{(0)}\\}$</li>
+<li><strong>迭代</strong> $t = 0, 1, 2, ...$：
+   - <strong>最近邻分配</strong>：对每个训练向量 $\mathbf{x}_n$，分配到最近的码字
+$$i_n = \arg\min_i |\mathbf{x}_n - \mathbf{c}_i^{(t)}|^2$$</li>
+</ol>
+<ul>
+<li><strong>质心更新</strong>：更新每个码字为其区域的质心
+$$\mathbf{c}_i^{(t+1)} = \frac{\sum_{n: i_n=i} \mathbf{x}_n}{|\{n: i_n=i\}|}$$</li>
+</ul>
+<ol start="3">
+<li><strong>收敛判断</strong>：当失真变化小于阈值时停止</li>
+</ol>
+<p><strong>收敛性</strong>：Lloyd算法保证失真单调递减，收敛到局部最优（不保证全局最优）。</p>
+<h3 id="433">4.3.3 最优性条件</h3>
+<p><strong>定理</strong>（Lloyd-Max条件）：最优量化器必须满足：</p>
+<ol>
+<li><strong>最近邻条件</strong>：量化区域是Voronoi分割</li>
+<li><strong>质心条件</strong>：每个码字是其Voronoi区域的质心（期望意义下）
+$$\mathbf{c}_i = \mathbb{E}[\mathbf{X} | \mathbf{X} \in V_i] = \frac{\int_{V_i} \mathbf{x} p(\mathbf{x}) d\mathbf{x}}{\int_{V_i} p(\mathbf{x}) d\mathbf{x}}$$
+Lloyd算法正是交替优化这两个条件。</li>
+</ol>
+<h3 id="434">4.3.4 与率失真理论的联系</h3>
+<p>Lloyd算法求解的是<strong>固定码率（固定 $M$）下的最小失真问题</strong>：
+$$D(R) = \min_{M=2^{kR}} \min_{\text{VQ}} \mathbb{E}[d(\mathbf{X}, \hat{\mathbf{X}})]$$
+这对应率失真曲线 $D(R)$ 的一个点。</p>
+<p><strong>关系</strong>：</p>
+<ul>
+<li>率失真理论给出理论下界 $D_{\min}(R)$（渐近最优，$k \to \infty$）</li>
+<li>Lloyd算法给出实际可达的失真 $D_{\text{Lloyd}}(R)$（有限 $k$）</li>
+<li>差距来源：有限维度损失、码本大小限制、局部最优</li>
+</ul>
+<p><strong>更深层的理论联系</strong>：</p>
+<p>Lloyd算法和率失真理论实际上是从不同角度解决同一个优化问题：</p>
+<ol>
+<li>
+<p><strong>率失真理论视角</strong>：
+   - 优化变量：条件概率分布 $p(\hat{\mathbf{x}}|\mathbf{x})$（测试信道）
+   - 目标：$\min I(\mathbf{X}; \hat{\mathbf{X}})$ subject to $\mathbb{E}[d] \leq D$
+   - 解：软量化（概率性映射）</p>
+</li>
+<li>
+<p><strong>Lloyd算法视角</strong>：
+   - 优化变量：码本 $\{\mathbf{c}_1, ..., \mathbf{c}_M\}$ 和分区 $\{V_1, ..., V_M\}$
+   - 目标：$\min \mathbb{E}[d(\mathbf{X}, Q(\mathbf{X}))]$ subject to $|\text{codebook}| = M$
+   - 解：硬量化（确定性映射）</p>
+</li>
+</ol>
+<p><strong>连接桥梁：硬量化 vs 软量化</strong></p>
+<p>Lloyd算法产生的确定性量化器 $\hat{\mathbf{x}} = Q(\mathbf{x})$ 可以看作率失真理论中 $\beta \to \infty$ 的极限情况。在有限 $\beta$ 下，Blahut-Arimoto算法给出软量化（$p(\hat{\mathbf{x}}|\mathbf{x})$ 是分布），而当 $\beta \to \infty$ 时，这个分布退化为确定性映射。</p>
+<p><strong>性能差距的来源</strong>：</p>
+<p>设 $k$ 维矢量量化，码本大小 $M = 2^{kR}$。理论和实际之间的差距可以分解为：
+$$D_{\text{Lloyd}}(R) = D_{\text{RD}}(R) + \Delta_{\text{finite-k}} + \Delta_{\text{local-opt}} + \Delta_{\text{finite-M}}$$
+其中：</p>
+<ul>
+<li>$\Delta_{\text{finite-k}}$：有限维度损失（$k$ 不够大）</li>
+<li>$\Delta_{\text{local-opt}}$：Lloyd算法局部最优（非全局最优）</li>
+<li>$\Delta_{\text{finite-M}}$：码本大小有限（量化颗粒度）</li>
+</ul>
+<p><strong>实际性能分析</strong>：</p>
+<p>对于 $k$ 维i.i.d.高斯源 $\mathbf{X} \sim \mathcal{N}(0, \sigma^2 \mathbf{I})$，码率 $R$ 比特/样本：</p>
+<ul>
+<li><strong>率失真界</strong>：$D_{\text{RD}} = \sigma^2 2^{-2R}$</li>
+<li><strong>Lloyd-VQ（有限$k$）</strong>：$D_{\text{Lloyd}} \approx \sigma^2 2^{-2R} \cdot G(k)^{-1}$</li>
+</ul>
+<p>其中 $G(k)$ 是维度 $k$ 的形状增益：
+$$G(k) \approx \frac{k}{2\pi e} \left(\frac{2\pi e}{k}\right)^{2/k}$$</p>
+<p>当 $k \to \infty$ 时，$G(k) \to \frac{1}{2\pi e}$，失真趋于率失真界。</p>
+<p><strong>数值例子</strong>：</p>
+<p>| 维度 $k$ | 形状增益 $G(k)$ | 性能损失（dB） |</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">维度 $k$</th>
+<th style="text-align: center;">形状增益 $G(k)$</th>
+<th style="text-align: center;">性能损失（dB）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">4.35 dB</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">1.13</td>
+<td style="text-align: center;">3.82 dB</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">1.22</td>
+<td style="text-align: center;">3.25 dB</td>
+</tr>
+<tr>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">1.29</td>
+<td style="text-align: center;">2.76 dB</td>
+</tr>
+<tr>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">1.33</td>
+<td style="text-align: center;">2.45 dB</td>
+</tr>
+<tr>
+<td style="text-align: center;">$\infty$</td>
+<td style="text-align: center;">1.42</td>
+<td style="text-align: center;">2.2 dB（极限）</td>
+</tr>
+</tbody>
+</table>
+<p>这表明：</p>
+<ul>
+<li>即使 $k=8$，也能达到距理论界约 2.8 dB 的性能</li>
+<li>$k=16$ 时，性能已经非常接近极限</li>
+<li>继续增大 $k$ 的边际收益递减</li>
+</ul>
+<p><strong>Rule of thumb</strong>：对于高斯源，Lloyd算法设计的矢量量化器（维度 $k \approx 8$-$16$）可以达到距率失真界约 1-2 dB 的性能（考虑良好的初始化和避免局部最优），这在实际应用中是很好的。对于实际系统，$k=8$ 通常是性能和复杂度的最佳平衡点。</p>
+<hr />
+<h2 id="44-vs">4.4 标量量化 vs 矢量量化</h2>
+<h3 id="441">4.4.1 性能对比</h3>
+<p><strong>高斯源，平方误差失真</strong>：</p>
+<p>| 方法 | 失真（相同码率 $R$） | 增益（dB） |</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">方法</th>
+<th style="text-align: center;">失真（相同码率 $R$）</th>
+<th style="text-align: center;">增益（dB）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">率失真界</td>
+<td style="text-align: center;">$D_{RD} = \sigma^2 2^{-2R}$</td>
+<td style="text-align: center;">基准</td>
+</tr>
+<tr>
+<td style="text-align: left;">最优标量量化</td>
+<td style="text-align: center;">$D_{SQ} \approx \frac{\pi e}{6} \sigma^2 2^{-2R}$</td>
+<td style="text-align: center;">$-2.2$ dB</td>
+</tr>
+<tr>
+<td style="text-align: left;">矢量量化（$k \to \infty$）</td>
+<td style="text-align: center;">$D_{VQ} \to D_{RD}$</td>
+<td style="text-align: center;">$0$ dB</td>
+</tr>
+</tbody>
+</table>
+<p><strong>解释</strong>：标量量化比率失真界差约 2.2 dB，而理想矢量量化可以达到率失真界。</p>
+<p><strong>实际矢量量化</strong>（有限 $k$）：</p>
+<p>随着维度 $k$ 增加，矢量量化性能逐渐接近率失真界：</p>
+<ul>
+<li>$k=2$：增益约 0.5 dB</li>
+<li>$k=4$：增益约 1 dB</li>
+<li>$k=8$：增益约 1.5 dB</li>
+<li>$k \to \infty$：增益 2.2 dB</li>
+</ul>
+<h3 id="442">4.4.2 复杂度对比</h3>
+<p><strong>编码复杂度</strong>：</p>
+<ul>
+<li>标量量化：$O(M)$（搜索 $M$ 个标量码字）</li>
+<li>矢量量化：$O(kM)$（计算 $M$ 个 $k$ 维向量的距离）</li>
+</ul>
+<p><strong>存储需求</strong>：</p>
+<ul>
+<li>标量量化码本：$M$ 个标量</li>
+<li>矢量量化码本：$M$ 个 $k$ 维向量</li>
+</ul>
+<p><strong>权衡</strong>：矢量量化性能更好，但复杂度和存储需求更高。实际中常用 $k=2$-$8$ 的折衷。</p>
+<h3 id="443">4.4.3 结构化矢量量化</h3>
+<p>为降低复杂度，实际中常用<strong>结构化矢量量化</strong>：</p>
+<p><strong>1. 乘积量化（Product Quantization）</strong>：
+将 $k$ 维向量分为 $m$ 个子向量，每个独立量化</p>
+<ul>
+<li>复杂度：$O(m \cdot M^{1/m})$（远小于 $O(kM)$）</li>
+<li>性能损失：约 1-2 dB</li>
+</ul>
+<p><strong>2. 树结构量化（Tree-Structured VQ）</strong>：
+用二叉树组织码本，每次决策只需比较 2 个码字</p>
+<ul>
+<li>复杂度：$O(k \log M)$</li>
+<li>性能损失：约 1-3 dB</li>
+</ul>
+<p><strong>3. 格量化（Lattice Quantization）</strong>：
+使用规则的几何结构（如立方格、六边形格）</p>
+<ul>
+<li>编码极快（只需取整运算）</li>
+<li>性能接近最优（高维下）</li>
+</ul>
+<p><strong>Rule of thumb</strong>：乘积量化和格量化在实际系统（如图像/视频编码器、向量数据库）中广泛应用，它们在性能和复杂度之间提供了良好的权衡。</p>
+<hr />
+<h2 id="45">4.5 本章小结</h2>
+<p><strong>核心概念</strong>：</p>
+<ol>
+<li>
+<p><strong>Blahut-Arimoto算法</strong>：
+   - 迭代求解率失真函数的数值方法
+   - E步：更新 $p(\hat{x}|x)$，M步：更新 $p(\hat{x})$
+   - 保证收敛到全局最优</p>
+</li>
+<li>
+<p><strong>矢量量化</strong>：
+   - 联合量化多个样本，利用相关性
+   - 渐近最优（$k \to \infty$）可达率失真界
+   - 性能增益：相比标量量化约 1.5-2 dB</p>
+</li>
+<li>
+<p><strong>Lloyd-Max算法</strong>：
+   - 最近邻分配 + 质心更新
+   - 等价于K-means聚类
+   - 固定码率下的最小失真</p>
+</li>
+<li>
+<p><strong>性能-复杂度权衡</strong>：
+   - 标量量化：简单但次优
+   - 矢量量化：最优但复杂
+   - 结构化VQ：折衷方案</p>
+</li>
+</ol>
+<p><strong>关键算法</strong>：</p>
+<ul>
+<li><strong>Blahut-Arimoto迭代</strong>：</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>E步：p(ŷ|x) = p(ŷ)exp[-βd(x,ŷ)] / Z(x,β)
+M步：p(ŷ) = Σx p(x)p(ŷ|x)
+</code></pre></div>
+
+<ul>
+<li><strong>Lloyd算法</strong>：</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>分配：i_n = argmin_i ||x_n - c_i||²
+更新：c_i = (1/|S_i|) Σ_{n∈S_i} x_n
+</code></pre></div>
+
+<hr />
+<h2 id="46">4.6 常见陷阱与错误</h2>
+<h3 id="gotcha-1-blahut-arimoto">Gotcha #1: Blahut-Arimoto的初始化</h3>
+<p><strong>错误</strong>：使用不合理的初始 $p^{(0)}(\hat{x})$（如全零或非归一化的）。</p>
+<p><strong>正解</strong>：使用均匀分布 $p^{(0)}(\hat{x}) = 1/|\hat{\mathcal{X}}|$ 是安全的选择。虽然算法对初始化不太敏感（总会收敛），但好的初始化能加速收敛。对于 $\beta$ 扫描，用前一个 $\beta$ 的解初始化下一个。</p>
+<h3 id="gotcha-2-beta-d">Gotcha #2: $\beta$ 与 $D$ 的对应</h3>
+<p><strong>错误</strong>：认为 $\beta$ 直接对应失真 $D$。</p>
+<p><strong>正解</strong>：$\beta$ 是拉格朗日乘子，而非失真本身。它控制率失真权衡的"陡峭程度"。给定 $\beta$，需要运行算法收敛后计算实际的 $D = \mathbb{E}[d(X,\hat{X})]$。$\beta$ 和 $D$ 的关系是单调的但非线性的。</p>
+<h3 id="gotcha-3">Gotcha #3: 矢量量化的"维度诅咒"</h3>
+<p><strong>错误</strong>：认为维度越高越好。</p>
+<p><strong>正解</strong>：虽然理论上 $k \to \infty$ 时性能最优，但实际中存在"维度诅咒"：</p>
+<ul>
+<li>训练数据需求：需要 $\gg M$ 个训练向量，$M = 2^{kR}$ 随 $k$ 指数增长</li>
+<li>泛化能力：高维下易过拟合</li>
+<li>复杂度：搜索和存储开销</li>
+</ul>
+<p>实际应用中，$k = 4$-$16$ 是常见的折衷。</p>
+<h3 id="gotcha-4-lloyd">Gotcha #4: Lloyd算法的局部最优</h3>
+<p><strong>错误</strong>：认为Lloyd算法找到全局最优码本。</p>
+<p><strong>正解</strong>：Lloyd算法只保证收敛到局部最优。不同初始化可能收敛到不同的局部最优。实际中常用多次随机初始化，选最好的结果。</p>
+<p>改进方法：</p>
+<ul>
+<li>K-means++初始化（选择远离已有码字的初始点）</li>
+<li>模拟退火、遗传算法等全局优化方法</li>
+</ul>
+<h3 id="gotcha-5">Gotcha #5: 标量量化的独立性假设</h3>
+<p><strong>错误</strong>：对相关信源直接使用标量量化。</p>
+<p><strong>正解</strong>：标量量化假设样本独立。对于相关信源（如相邻像素、时间序列），应该先去相关（通过预测、变换如DCT），再标量量化。这就是<strong>预测编码</strong>和<strong>变换编码</strong>的思想。</p>
+<p>或者直接使用矢量量化，它天然处理相关性。</p>
+<h3 id="gotcha-6">Gotcha #6: 混淆码本大小和码率</h3>
+<p><strong>错误</strong>：认为码本大小 $M$ 就是码率。</p>
+<p><strong>正解</strong>：</p>
+<ul>
+<li>对于标量量化：码率 $R = \log M$ 比特/样本</li>
+<li>对于 $k$ 维矢量量化：码率 $R = \frac{\log M}{k}$ 比特/样本</li>
+</ul>
+<p>别忘了除以维度！</p>
+<h3 id="gotcha-7">Gotcha #7: 忽略熵编码</h3>
+<p><strong>错误</strong>：认为矢量量化后直接输出索引（每个索引 $\log M$ 比特）。</p>
+<p><strong>正解</strong>：如果码字被选择的概率不同（即 $p(\mathbf{c}_i)$ 不均匀），应该在矢量量化后再做<strong>熵编码</strong>（如霍夫曼编码、算术编码），可以进一步降低码率到 $H(Q(\mathbf{X}))$。</p>
+<p>率失真理论中的"码率"$R = I(X;\hat{X})$ 已经包含了这一点，但实际实现中需要显式的熵编码器。</p>
+<hr />
+<p><strong>下一章预告</strong>：第五章将讨论超越MSE的失真度量，探索感知失真和率失真感知（RDP）权衡的前沿理论。</p>
+<p><a href="chapter3.html">← 第三章</a> | <a href="index.html">返回目录</a> | <a href="chapter5.html">第五章：感知失真度量与率失真感知权衡 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter3.html" class="nav-link prev">← 第三章：经典信源的率失真函数</a><a href="chapter5.html" class="nav-link next">第五章：感知失真度量与率失真感知权衡 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

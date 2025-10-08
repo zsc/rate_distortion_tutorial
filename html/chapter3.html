@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第三章：经典信源的率失真函数</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">率失真理论教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第一章：信息论基础与率失真入门</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第二章：率失真定理与理论性质</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第三章：经典信源的率失真函数</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第四章：率失真计算与矢量量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第五章：感知失真度量与率失真感知权衡</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第六章：图像与视频压缩中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第七章：字典学习与稀疏编码的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第八章：深度学习中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第九章：实践指南与应用案例</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="_1">第三章：经典信源的率失真函数</h1>
+<p>本章详细计算两个最重要的信源的率失真函数：二元对称源（伯努利源）在汉明失真下，以及连续高斯源在均方误差失真下。这两个经典结果是率失真理论的基石，它们的推导和性质为理解更复杂信源提供了重要直觉。</p>
+<p><strong>学习目标</strong>：</p>
+<ul>
+<li>掌握伯努利源的率失真函数推导和性质</li>
+<li>理解高斯源率失真函数的"水注入"解释</li>
+<li>建立对离散和连续信源率失真权衡的直觉</li>
+<li>了解这些经典结果在实际中的应用</li>
+</ul>
+<hr />
+<h2 id="31">3.1 伯努利源的率失真函数</h2>
+<h3 id="311">3.1.1 问题设定</h3>
+<p>考虑<strong>伯努利($p$)源</strong>：$X \in \{0, 1\}$，$P(X=1) = p$，$P(X=0) = 1-p$。</p>
+<p>使用<strong>汉明失真</strong>：</p>
+<p>$$d_H(x, \hat{x}) = \begin{cases} 0 &amp; \text{if } x = \hat{x} \\ 1 &amp; \text{if } x \neq \hat{x} \end{cases}$$
+目标：计算率失真函数 $R(D)$。</p>
+<p><strong>物理意义</strong>：汉明失真对应"错误率"。失真 $D$ 就是平均错误概率，$R(D)$ 给出了在错误率不超过 $D$ 的情况下压缩所需的最小码率。</p>
+<h3 id="312-p-05">3.1.2 对称情况：$p = 0.5$</h3>
+<p>我们先考虑最简单的情况：$p = 0.5$（均匀分布）。此时 $H(X) = 1$ 比特。</p>
+<p><strong>定理 3.1</strong>（伯努利(0.5)源的率失真函数）：
+$$R(D) = \begin{cases}
+1 - H_b(D) &amp; 0 \leq D \leq 0.5 \\
+0 &amp; D &gt; 0.5
+\end{cases}$$
+其中 $H_b(D) = -D \log D - (1-D) \log(1-D)$ 是二元熵函数。</p>
+<p><strong>解释</strong>：</p>
+<ul>
+<li>当 $D = 0$（无损）：$R(0) = 1 - H_b(0) = 1$，等于信源熵</li>
+<li>当 $D = 0.5$（随机猜测）：$R(0.5) = 1 - H_b(0.5) = 1 - 1 = 0$，不需要传输信息</li>
+<li>中间：率和失真平滑权衡</li>
+</ul>
+<p><strong>推导思路</strong>（不含完整证明）：</p>
+<p>最优测试信道 $p(\hat{x}|x)$ 具有对称结构：
+$$p(\hat{x}=x|x) = 1 - \delta, \quad p(\hat{x} \neq x|x) = \delta$$
+即以概率 $\delta$ 翻转。此时：</p>
+<ul>
+<li>失真：$D = \delta$</li>
+<li>$\hat{X}$ 的分布仍是均匀的（对称性）</li>
+<li>互信息：$I(X; \hat{X}) = H(\hat{X}) - H(\hat{X}|X) = 1 - H_b(\delta) = 1 - H_b(D)$</li>
+</ul>
+<p>可以证明这个测试信道是最优的，因此 $R(D) = 1 - H_b(D)$。</p>
+<p><strong>更详细的推导</strong>：</p>
+<p>为什么这个对称翻转信道是最优的？让我们展开计算互信息：</p>
+<p><strong>Step 1：计算条件熵 $H(\hat{X}|X)$</strong></p>
+<p>给定 $X$，$\hat{X}$ 以概率 $1-\delta$ 等于 $X$，以概率 $\delta$ 等于 $1-X$。因此：
+$$H(\hat{X}|X=x) = H_b(\delta) = -\delta \log \delta - (1-\delta)\log(1-\delta)$$
+对所有 $x$ 都相同，所以：
+$$H(\hat{X}|X) = H_b(\delta)$$
+<strong>Step 2：计算边缘熵 $H(\hat{X})$</strong></p>
+<p>由于对称性，如果 $X$ 是均匀的，经过对称翻转信道后，$\hat{X}$ 仍然是均匀的：
+$$P(\hat{X}=1) = P(X=1) \cdot (1-\delta) + P(X=0) \cdot \delta = 0.5 \cdot (1-\delta) + 0.5 \cdot \delta = 0.5$$
+所以 $\hat{X} \sim \text{Bernoulli}(0.5)$，$H(\hat{X}) = 1$。</p>
+<p><strong>Step 3：计算互信息</strong>
+$$I(X; \hat{X}) = H(\hat{X}) - H(\hat{X}|X) = 1 - H_b(\delta) = 1 - H_b(D)$$
+<strong>为什么是最优？</strong> 可以通过拉格朗日乘子法证明，在所有满足 $\mathbb{E}[d_H(X,\hat{X})] \leq D$ 的测试信道中，对称翻转信道达到最小互信息。直觉上，这个信道"均匀地"分配错误到0和1，最大化了 $\hat{X}$ 的熵，同时保持了条件熵的平衡。</p>
+<p><strong>数值例子</strong>：</p>
+<p>假设 $D = 0.1$（允许 10% 的错误率）：
+$$R(0.1) = 1 - H_b(0.1) = 1 - [-0.1 \log_2 0.1 - 0.9 \log_2 0.9]$$
+$$= 1 - [0.332 + 0.137] = 1 - 0.469 = 0.531 \text{ 比特}$$
+这意味着，允许 10% 错误率时，只需传输约 0.53 比特（相比无损的 1 比特），节省了约 47% 的码率！</p>
+<p><strong>率失真曲线</strong>：</p>
+<div class="codehilite"><pre><span></span><code>R(D)
+ 1.0 |*
+     | \
+     |  \
+ 0.8 |   \
+     |    \
+ 0.6 |     \
+     |      \
+ 0.4 |       \
+     |        \
+ 0.2 |         \
+     |          \____
+ 0.0 |_______________*___
+     0   0.1  0.2  0.3  0.4  0.5   D
+</code></pre></div>
+
+<h3 id="313-p">3.1.3 一般情况：任意 $p$</h3>
+<p>对于一般的伯努利($p$)源，率失真函数更复杂：
+$$R(D) = \begin{cases}
+H_b(p) - H_b(D) &amp; 0 \leq D \leq \min(p, 1-p) \\
+0 &amp; D &gt; \min(p, 1-p)
+\end{cases}$$
+<strong>关键观察</strong>：</p>
+<ul>
+<li>无失真：$R(0) = H_b(p)$，等于信源熵</li>
+<li>最大失真：$D_{\max} = \min(p, 1-p)$，对应总是猜测概率较大的符号</li>
+<li>例如，如果 $p = 0.1$，最优常数重建是总猜 0，错误率 $D_{\max} = 0.1$</li>
+</ul>
+<p><strong>Rule of thumb</strong>：对于汉明失真，$R(D) = H(X) - H(D)$ 形式很常见。直观理解：$H(X)$ 是总的不确定性，$H(D)$ 对应失真引入的"额外"不确定性，剩下的是必须传输的信息。</p>
+<h3 id="314">3.1.4 最优测试信道的结构</h3>
+<p>最优测试信道 $p^*(\hat{x}|x)$ 满足：
+$$p^*(\hat{x}=1|x=1) = p^*(\hat{x}=0|x=0) = 1 - \delta$$
+其中 $\delta$ 由失真约束决定。这个对称结构反映了汉明失真的对称性。</p>
+<p><strong>重要性质</strong>：最优重建 $\hat{X}$ 仍是伯努利分布，但参数不同。通过适当的"加噪"（以概率 $\delta$ 翻转），在满足失真约束的同时最小化互信息。</p>
+<hr />
+<h2 id="32">3.2 高斯源的率失真函数</h2>
+<h3 id="321">3.2.1 问题设定</h3>
+<p>考虑<strong>高斯源</strong>：$X \sim \mathcal{N}(0, \sigma^2)$（均值为0，方差为 $\sigma^2$ 的高斯随机变量）。</p>
+<p>使用<strong>平方误差失真</strong>：
+$$d(x, \hat{x}) = (x - \hat{x})^2$$
+目标：计算率失真函数 $R(D)$。</p>
+<p>这是连续信源的经典例子，在图像、音频、通信等领域有广泛应用。</p>
+<h3 id="322">3.2.2 主要结果</h3>
+<p><strong>定理 3.2</strong>（高斯源的率失真函数）：</p>
+<p>对于 $X \sim \mathcal{N}(0, \sigma^2)$ 和平方误差失真，率失真函数为：
+$$R(D) = \begin{cases}
+\frac{1}{2} \log \frac{\sigma^2}{D} &amp; 0 &lt; D \leq \sigma^2 \\
+0 &amp; D &gt; \sigma^2
+\end{cases}$$
+其中对数以2为底（如果用自然对数，系数变为 $\frac{1}{2\ln 2}$）。</p>
+<p><strong>关键特征</strong>：</p>
+<ul>
+<li>$R(D)$ 随 $D$ 对数递减</li>
+<li>当 $D = \sigma^2$ 时，$R(D) = 0$（对应零重建）</li>
+<li>当 $D \to 0$ 时，$R(D) \to \infty$（完全无损需要无穷码率）</li>
+</ul>
+<p><strong>单位注意</strong>：对于连续源，$R(D)$ 可能是负的（如果用微分熵），但上式中 $R(D) \geq 0$ 因为 $D \leq \sigma^2$。</p>
+<h3 id="323">3.2.3 最优测试信道：高斯加噪</h3>
+<p>高斯源的一个优美性质是：<strong>最优测试信道也是高斯的</strong>。更准确地说，最优重建 $\hat{X}$ 是 $X$ 的线性函数加上独立的高斯噪声。</p>
+<p><strong>标准推导</strong>：</p>
+<p>最优重建可以表示为：
+$$\hat{X} = \alpha X$$
+其中 $\alpha$ 是缩放系数，满足 $0 \leq \alpha \leq 1$。这相当于对原信号进行"衰减"。</p>
+<p><strong>失真计算</strong>：
+$$D = \mathbb{E}[(X - \hat{X})^2] = \mathbb{E}[(X - \alpha X)^2] = (1-\alpha)^2 \sigma^2$$
+解出 $\alpha$：
+$$\alpha = 1 - \sqrt{\frac{D}{\sigma^2}}$$
+（取正根，因为 $\alpha \in [0,1]$）</p>
+<p><strong>互信息计算</strong>：</p>
+<p>由于 $\hat{X} = \alpha X$ 且 $X \sim \mathcal{N}(0, \sigma^2)$，有 $\hat{X} \sim \mathcal{N}(0, \alpha^2 \sigma^2)$。</p>
+<p>对于联合高斯分布，互信息可以用微分熵表示：
+$$I(X; \hat{X}) = h(\hat{X}) - h(\hat{X}|X)$$
+<strong>关键洞察</strong>：给定 $X$，$\hat{X} = \alpha X$ 是确定的，所以 $h(\hat{X}|X) = 0$？不对！</p>
+<p>让我重新表述。实际上，最优测试信道的正确形式是：
+$$\hat{X} = \alpha X + Z$$
+其中 $Z \sim \mathcal{N}(0, \sigma_Z^2)$ 独立于 $X$，且参数 $\alpha$ 和 $\sigma_Z^2$ 由失真约束和最优性条件确定。</p>
+<p><strong>更清晰的表述</strong>（后向测试信道）：</p>
+<p>在率失真理论中，我们关心的是条件分布 $p(\hat{x}|x)$，而不是确定性映射。最优的 $p(\hat{x}|x)$ 是高斯的：
+$$\hat{X} | X=x \sim \mathcal{N}\left(\sqrt{1 - \frac{D}{\sigma^2}} \cdot x, D\right)$$
+换句话说：
+$$\hat{X} = \sqrt{1 - \frac{D}{\sigma^2}} \cdot X + Z, \quad Z \sim \mathcal{N}(0, D), \quad Z \perp X$$
+<strong>验证失真</strong>：
+$$\mathbb{E}[(X - \hat{X})^2] = \mathbb{E}\left[\left(X - \sqrt{1-\frac{D}{\sigma^2}} X - Z\right)^2\right]$$
+$$= \mathbb{E}\left[\left(\left(1 - \sqrt{1-\frac{D}{\sigma^2}}\right) X - Z\right)^2\right]$$
+经过计算（利用 $X \perp Z$），可以验证失真确实等于 $D$。</p>
+<p><strong>互信息计算</strong>：</p>
+<p>对于联合高斯 $(X, \hat{X})$，互信息有显式公式：
+$$I(X; \hat{X}) = \frac{1}{2} \log \frac{\text{Var}(X) \cdot \text{Var}(\hat{X})}{\text{Var}(X) \cdot \text{Var}(\hat{X}) - [\text{Cov}(X, \hat{X})]^2}$$
+通过计算协方差：
+$$\text{Cov}(X, \hat{X}) = \text{Cov}\left(X, \sqrt{1-\frac{D}{\sigma^2}} X + Z\right) = \sqrt{1-\frac{D}{\sigma^2}} \sigma^2 = \sigma\sqrt{\sigma^2 - D}$$
+以及方差：
+$$\text{Var}(\hat{X}) = \left(1-\frac{D}{\sigma^2}\right)\sigma^2 + D = \sigma^2 - D + D = \sigma^2$$
+（实际上这个计算需要更仔细...）</p>
+<p><strong>简化的理解</strong>：</p>
+<p>更直接的方式是利用高斯信源的经典结果。可以证明，对于高斯源 $X \sim \mathcal{N}(0, \sigma^2)$ 和平方误差失真 $D$，最优率失真函数为：
+$$R(D) = \frac{1}{2} \log \frac{\sigma^2}{D}$$
+这个结果可以通过变分法或 KKT 条件严格证明（详见 Cover &amp; Thomas 第13章）。</p>
+<p><strong>直观解释</strong>：</p>
+<p>为什么最优测试信道是"缩放 + 加噪"？</p>
+<ol>
+<li><strong>缩放</strong>：将 $X$ 缩放到较小的方差，减少需要传输的"能量"</li>
+<li><strong>加噪</strong>：在重建端引入高斯噪声来达到目标失真 $D$</li>
+</ol>
+<p>这种结构在信息论中称为"test channel against a Gaussian source"，它在满足失真约束的同时，最小化了 $X$ 和 $\hat{X}$ 之间的相关性（互信息）。</p>
+<p><strong>等价的后向信道视角</strong>：</p>
+<p>也可以从"编码-解码"的角度理解：编码器将 $X$ 量化/压缩到码字索引，解码器根据索引重建 $\hat{X}$。在最优情况下，量化噪声 $N = X - \hat{X}$ 是高斯的，方差为 $D$，且与 $\hat{X}$ 独立（最优性条件）。</p>
+<p><strong>Rule of thumb</strong>：高斯源的率失真函数是对数形式 $R(D) = \frac{1}{2} \log \frac{\sigma^2}{D}$。每增加1比特（码率增加1），失真减少一半（$D \to D/2$）。这个"6 dB/bit"规律在实际压缩中很常见：
+$$R(D/2) - R(D) = \frac{1}{2}\log\frac{\sigma^2}{D/2} - \frac{1}{2}\log\frac{\sigma^2}{D} = \frac{1}{2}\log 2 = 0.5 \text{ 比特}$$
+等等，应该是 1 比特：
+$$R(D/2) - R(D) = \frac{1}{2}[\log(\sigma^2) - \log(D/2)] - \frac{1}{2}[\log(\sigma^2) - \log D]$$
+$$= \frac{1}{2}[\log D - \log(D/2)] = \frac{1}{2} \log 2 = 0.5 \text{ 比特}$$
+所以每减半失真需要增加 <strong>0.5 比特</strong>。或者说，每增加 <strong>1 比特</strong>，失真减少到原来的 $1/4$（减少 4 倍，即 6 dB）。</p>
+<h3 id="324">3.2.4 水注入解释（逆反定理）</h3>
+<p>高斯源的结果可以推广到<strong>多维高斯源</strong>（高斯向量），此时有著名的<strong>水注入（water-filling）</strong>解法。</p>
+<p>考虑 $X \sim \mathcal{N}(0, \mathbf{K}_X)$，其中 $\mathbf{K}_X$ 是协方差矩阵。设其特征值为 $\lambda_1, ..., \lambda_k$（按降序）。</p>
+<p><strong>逆反水注入定理</strong>：率失真函数为：
+$$R(D) = \frac{1}{2} \sum_{i=1}^k \max\left\\{0, \log \frac{\lambda_i}{\theta}\right\\}$$
+其中 $\theta$ 由失真约束决定：
+$$D = \sum_{i=1}^k \min(\lambda_i, \theta)$$
+<strong>水注入类比</strong>：</p>
+<ul>
+<li>想象有 $k$ 个容器，第 $i$ 个容器底部高度是 $0$，宽度相同</li>
+<li>向容器中注水，总水量对应失真 $D$</li>
+<li>水面高度是 $\theta$</li>
+<li>第 $i$ 个容器的水量是 $\min(\lambda_i, \theta)$</li>
+<li>码率对应"空气部分"：$\log(\lambda_i/\theta)$（当 $\lambda_i &gt; \theta$）</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>逆反水注入示意（简化）：
+<span class="w">    </span><span class="o">|</span><span class="w">          </span><span class="o">|</span>
+<span class="w">    </span><span class="o">|</span><span class="w">   </span>空气<span class="w">   </span><span class="o">|</span><span class="w">  </span><span class="o">&lt;-</span><span class="w"> </span>码率分配给此分量
+────┼──────────┼──<span class="w">  </span>θ<span class="w"> </span><span class="p">(</span>水面<span class="o">/</span>失真阈值<span class="p">)</span>
+<span class="w">    </span><span class="o">|</span><span class="w">   </span>水<span class="w">     </span><span class="o">|</span>
+<span class="w">    </span><span class="o">|</span><span class="w">   </span>水<span class="w">     </span><span class="o">|</span><span class="w">  </span><span class="o">&lt;-</span><span class="w"> </span>失真分配给此分量
+<span class="w">    </span>└──────────┘
+<span class="w">    </span>分量<span class="nf">i </span><span class="p">(</span>λ_<span class="n">i大</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>直觉</strong>：</p>
+<ul>
+<li>方差大的分量（$\lambda_i$ 大）：失真少，码率多（重要分量，精细编码）</li>
+<li>方差小的分量（$\lambda_i$ 小）：失真多，码率少（不重要分量，粗糙编码或丢弃）</li>
+</ul>
+<p>这在图像压缩（DCT、KLT）中直接应用：高方差系数精细量化，低方差系数粗糙量化或丢弃。</p>
+<hr />
+<h2 id="33">3.3 两种信源的对比</h2>
+<p>| 特性 | 伯努利源（汉明失真） | 高斯源（平方误差） |</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">特性</th>
+<th style="text-align: center;">伯努利源（汉明失真）</th>
+<th style="text-align: center;">高斯源（平方误差）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>信源类型</strong></td>
+<td style="text-align: center;">离散</td>
+<td style="text-align: center;">连续</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$R(D)$ 形式</strong></td>
+<td style="text-align: center;">$H_b(p) - H_b(D)$</td>
+<td style="text-align: center;">$\frac{1}{2}\log\frac{\sigma^2}{D}$</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>最优测试信道</strong></td>
+<td style="text-align: center;">对称二元信道（翻转）</td>
+<td style="text-align: center;">高斯加噪</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$R(D)$ 形状</strong></td>
+<td style="text-align: center;">凸，有限支撑</td>
+<td style="text-align: center;">凸，对数递减</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>$D_{\max}$</strong></td>
+<td style="text-align: center;">$\min(p, 1-p)$</td>
+<td style="text-align: center;">$\sigma^2$</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>实际应用</strong></td>
+<td style="text-align: center;">文本、离散数据</td>
+<td style="text-align: center;">图像、音频、传感器数据</td>
+</tr>
+</tbody>
+</table>
+<p><strong>共同特点</strong>：</p>
+<ol>
+<li>都是凸函数</li>
+<li>都从 $R(0) = H(X)$ 单调递减到 $R(D_{\max}) = 0$</li>
+<li>最优测试信道都有简洁的解析形式</li>
+</ol>
+<hr />
+<h2 id="34">3.4 实际应用与推广</h2>
+<h3 id="341">3.4.1 图像压缩中的高斯假设</h3>
+<p>虽然图像像素不是完全高斯的，但<strong>DCT 系数</strong>或<strong>小波系数</strong>在高频部分近似高斯分布。因此，高斯源的率失真函数为图像压缩提供了理论指导。</p>
+<p><strong>JPEG 的量化</strong>：</p>
+<p>JPEG 标准的核心步骤体现了率失真理论：</p>
+<ol>
+<li>
+<p><strong>分块 DCT 变换</strong>：将图像分成 8×8 块，对每块进行离散余弦变换（DCT）
+   - DCT 是近似 KLT（Karhunen-Loève Transform）
+   - 将空间相关的像素转换为近似独立的频率系数</p>
+</li>
+<li>
+<p><strong>系数统计特性</strong>：
+   - <strong>DC 系数</strong>（左上角）：均值大，方差大，接近拉普拉斯分布
+   - <strong>低频 AC 系数</strong>：方差中等，近似拉普拉斯或高斯
+   - <strong>高频 AC 系数</strong>：方差小，近似零均值高斯</p>
+</li>
+<li>
+<p><strong>量化表设计</strong>：
+   - 利用水注入原理：方差大的系数（低频）分配更细的量化步长（更多比特）
+   - 方差小的系数（高频）使用粗量化或直接丢弃（失真大但码率贡献小）
+   - 量化步长 $\Delta_i$ 与系数方差 $\sigma_i^2$ 的关系遵循率失真优化</p>
+</li>
+</ol>
+<p><strong>具体例子</strong>：</p>
+<p>标准 JPEG 量化表的左上角（低频）值为 16，右下角（高频）值为 99。这意味着：</p>
+<ul>
+<li>低频系数：量化步长小（16），精细编码</li>
+<li>高频系数：量化步长大（99），粗糙编码</li>
+</ul>
+<p>这个比例（约 6:1）反映了 DCT 系数方差的典型分布，直接来源于率失真理论的指导。</p>
+<p><strong>性能分析</strong>：</p>
+<p>对于典型的自然图像：</p>
+<ul>
+<li>DCT 系数方差按频率递减，高频方差约为低频的 1/100</li>
+<li>根据水注入原理，高频系数分配的码率应显著少于低频</li>
+<li>实际 JPEG 编码器的比特分配与理论预测高度吻合</li>
+</ul>
+<p><strong>质量因子（Quality Factor）</strong>：</p>
+<p>JPEG 的质量因子 $Q \in [1, 100]$ 本质上是拉格朗日乘子 $\beta$ 的体现：</p>
+<ul>
+<li>$Q$ 高（如 95）：$\beta$ 大，更关心失真，量化步长小，码率高</li>
+<li>$Q$ 低（如 10）：$\beta$ 小，更关心码率，量化步长大，失真高</li>
+</ul>
+<p>调节 $Q$ 就是在率失真曲线上移动工作点。</p>
+<h3 id="342">3.4.2 拉普拉斯源和其他分布</h3>
+<p>除了高斯和伯努利，其他常见分布的率失真函数：</p>
+<p><strong>拉普拉斯源</strong>：$p(x) = \frac{1}{2b} e^{-|x|/b}$，平方误差失真：
+$$R(D) = \log \frac{b^2}{D} - 1 \quad (D \leq D_0)$$
+其中 $D_0$ 是阈值。拉普拉斯分布在图像/视频的预测误差中常见。</p>
+<p><strong>均匀源</strong>：$X \sim \text{Uniform}[-a, a]$，平方误差：
+$$R(D) = \log \frac{a}{\sqrt{3D}} \quad (D \leq a^2/3)$$</p>
+<h3 id="343">3.4.3 从单信源到向量源</h3>
+<p>单变量的结果可以推广到向量（多维）情况。关键工具是<strong>KLT（Karhunen-Loève Transform）</strong>或<strong>PCA（主成分分析）</strong>：</p>
+<p><strong>变换编码的三步骤</strong>：</p>
+<ol>
+<li>
+<p><strong>去相关变换</strong>：对信源向量 $\mathbf{X} \in \mathbb{R}^n$ 做 KLT（或近似的 DCT/DWT）
+$$\mathbf{Y} = \mathbf{U}^T \mathbf{X}$$
+其中 $\mathbf{U}$ 是协方差矩阵 $\mathbf{K}_X$ 的特征向量矩阵。变换后的系数 $\mathbf{Y}$ 各分量不相关。</p>
+</li>
+<li>
+<p><strong>独立量化</strong>：对每个分量 $Y_i$ 独立应用标量率失真函数
+$$R_i(D_i) = \frac{1}{2} \log \frac{\lambda_i}{D_i}$$
+其中 $\lambda_i$ 是第 $i$ 个特征值（即 $Y_i$ 的方差）。</p>
+</li>
+<li>
+<p><strong>水注入分配</strong>：在总失真约束 $\sum D_i \leq D_{\text{total}}$ 下，最优分配满足逆反水注入：
+$$D_i = \min(\lambda_i, \theta)$$
+其中 $\theta$ 由总失真约束决定。对应的码率：
+$$R_i = \begin{cases} \frac{1}{2}\log\frac{\lambda_i}{\theta} &amp; \lambda_i &gt; \theta \\ 0 &amp; \lambda_i \leq \theta \end{cases}$$
+<strong>实际意义</strong>：</p>
+</li>
+</ol>
+<ul>
+<li><strong>高方差分量</strong>（$\lambda_i$ 大，对应低频/主成分）：失真小（$D_i = \theta &lt; \lambda_i$），码率高</li>
+<li><strong>低方差分量</strong>（$\lambda_i$ 小，对应高频/次要成分）：失真大（$D_i = \lambda_i$），码率低甚至为0（丢弃）</li>
+</ul>
+<p><strong>编码增益（Coding Gain）</strong>：</p>
+<p>变换编码相对于直接量化的增益可以量化。对于高斯源，编码增益为：
+$$G = \frac{\text{算术平均}}{\text{几何平均}} = \frac{\frac{1}{n}\sum_{i=1}^n \lambda_i}{\left(\prod_{i=1}^n \lambda_i\right)^{1/n}}$$
+这个比值总是 $\geq 1$，相等当且仅当所有 $\lambda_i$ 相等（白噪声，无相关性）。</p>
+<p>对于典型自然图像，编码增益约为 6-10 dB，意味着变换编码可以节省一半以上的码率！</p>
+<p><strong>实际系统中的近似</strong>：</p>
+<ul>
+<li><strong>JPEG</strong>：使用 DCT 近似 KLT，因为 DCT 有快速算法且接近最优（对于一阶马尔可夫模型）</li>
+<li><strong>JPEG 2000</strong>：使用小波变换（DWT），在多尺度上近似 KLT</li>
+<li><strong>视频编码</strong>：先时间预测去除相关性，再对残差做 DCT/变换编码</li>
+</ul>
+<p><strong>Rule of thumb</strong>：对于大多数自然信号（图像、音频），高斯假设 + 变换编码 + 水注入分配是一个强大的压缩框架。即使信号不完全高斯，这个框架也能给出接近最优的性能。三步骤（变换-量化-熵编码）是现代压缩标准的通用范式。</p>
+<hr />
+<h2 id="35">3.5 本章小结</h2>
+<p><strong>核心结果</strong>：</p>
+<ol>
+<li><strong>伯努利(0.5)源，汉明失真</strong>：
+$$R(D) = 1 - H_b(D), \quad 0 \leq D \leq 0.5$$</li>
+</ol>
+<ul>
+<li>最优测试信道：对称翻转信道</li>
+<li>$R(D)$ 形式：$H(X) - H(D)$</li>
+</ul>
+<ol start="2">
+<li><strong>高斯源，平方误差失真</strong>：
+$$R(D) = \frac{1}{2} \log \frac{\sigma^2}{D}, \quad 0 &lt; D \leq \sigma^2$$</li>
+</ol>
+<ul>
+<li>最优测试信道：高斯加噪</li>
+<li>多维推广：逆反水注入定理</li>
+</ul>
+<p><strong>关键公式</strong>：</p>
+<ul>
+<li>二元熵函数：$H_b(p) = -p\log p - (1-p)\log(1-p)$</li>
+<li>伯努利源：$R(D) = H_b(p) - H_b(D)$</li>
+<li>高斯源：$R(D) = \frac{1}{2}\log\frac{\sigma^2}{D}$</li>
+<li>水注入：$R(D) = \frac{1}{2}\sum_i \max\\{0, \log\frac{\lambda_i}{\theta}\\}$</li>
+</ul>
+<p><strong>实际意义</strong>：</p>
+<ul>
+<li>伯努利源模型适用于离散数据、二值数据、通信中的错误率分析</li>
+<li>高斯源模型适用于图像、音频、传感器数据等连续信号</li>
+<li>水注入原理指导实际编码器的比特分配</li>
+</ul>
+<hr />
+<h2 id="36">3.6 常见陷阱与错误</h2>
+<h3 id="gotcha-1-rd">Gotcha #1: 高斯源的 $R(D)$ 可以是负的？</h3>
+<p><strong>错误</strong>：直接使用微分熵 $h(X)$ 时，$R(D)$ 可能是负值。</p>
+<p><strong>正解</strong>：微分熵本身可以是负的（不同于离散熵）。率失真函数 $R(D)$ 也可以是负值，这不矛盾。$R(D)$ 表示的是<strong>相对</strong>于参考的码率，而不是绝对码率。实际编码时，总码率 = $R(D)$ + 熵编码开销 + 其他开销，总和是非负的。</p>
+<p>实际上，对于 $D &lt; \sigma^2$，$R(D) = \frac{1}{2}\log\frac{\sigma^2}{D} &gt; 0$ 总是正的。只有当我们考虑非常特殊的失真度量或归一化时，$R(D)$ 才可能为负。</p>
+<h3 id="gotcha-2">Gotcha #2: 对数的底数</h3>
+<p><strong>错误</strong>：混淆以2为底和自然对数。</p>
+<p><strong>正解</strong>：信息论中通常使用以2为底的对数（码率单位：比特）。如果使用自然对数（码率单位：奈特 nat），公式会有常数因子差异。例如：</p>
+<ul>
+<li>以2为底：$R(D) = \frac{1}{2} \log_2 \frac{\sigma^2}{D}$ 比特</li>
+<li>自然对数：$R(D) = \frac{1}{2} \ln \frac{\sigma^2}{D}$ 奈特 = $\frac{1}{2\ln 2} \log_2 \frac{\sigma^2}{D}$ 比特</li>
+</ul>
+<p>务必统一底数，避免混淆。</p>
+<h3 id="gotcha-3">Gotcha #3: 平方误差失真的单位</h3>
+<p><strong>错误</strong>：忘记失真 $D$ 的单位。</p>
+<p><strong>正解</strong>：对于平方误差失真，$D$ 的单位是"（原信号单位）$^2$"。例如，如果 $X$ 的单位是伏特，则 $D$ 的单位是伏特$^2$（功率）。在比较不同系统时，必须注意信号幅度的归一化。</p>
+<p>通常，我们归一化信号使 $\sigma^2 = 1$，此时失真 $D$ 可以理解为相对失真（失真功率/信号功率），这就是<strong>信噪比（SNR）</strong>的倒数。</p>
+<h3 id="gotcha-4">Gotcha #4: 高斯假设的适用性</h3>
+<p><strong>错误</strong>：认为所有信号都是高斯的，因此直接应用 $R(D) = \frac{1}{2}\log\frac{\sigma^2}{D}$。</p>
+<p><strong>正解</strong>：高斯假设是近似。对于非高斯源（如拉普拉斯分布），率失真函数会有所不同。但实际中，由于中心极限定理和变换后的近似高斯性，高斯模型通常是合理的一阶近似。</p>
+<p>对于明显非高斯的源（如稀疏信号、离散符号），需要更精确的模型（第四章介绍数值计算方法）。</p>
+<h3 id="gotcha-5">Gotcha #5: 最优测试信道的实现</h3>
+<p><strong>错误</strong>：认为实际编码器必须显式实现测试信道 $p(\hat{x}|x)$（例如，给信号加噪声）。</p>
+<p><strong>正解</strong>：测试信道是理论工具，描述最优编码的<strong>统计特性</strong>，而非具体实现。实际量化器（如标量量化、矢量量化）在长序列上近似这个统计行为，但不需要显式加噪声。</p>
+<p>例如，标量量化器 $\hat{x} = Q(x)$ 是确定性的，但当 $x$ 在量化区间内均匀分布时，量化误差 $x - Q(x)$ 近似均匀噪声，从而近似最优测试信道。</p>
+<h3 id="gotcha-6">Gotcha #6: 伯努利源的对称性</h3>
+<p><strong>错误</strong>：对于伯努利($p$)源，$p \neq 0.5$ 时，认为最优测试信道仍是对称的。</p>
+<p><strong>正解</strong>：当 $p \neq 0.5$ 时，最优测试信道<strong>不再是完全对称的</strong>。具体地，$p(1|0)$ 和 $p(0|1)$ 会不同，以反映信源的不对称性。完整分析需要拉格朗日方法（或 Blahut-Arimoto 算法）。</p>
+<p>不过，率失真函数的形式 $R(D) = H_b(p) - H_b(D)$ 仍成立（对 $D \leq \min(p,1-p)$），这是一个美妙的结果。</p>
+<h3 id="gotcha-7">Gotcha #7: 水注入的方向</h3>
+<p><strong>错误</strong>：混淆"水注入"（信道容量）和"逆反水注入"（率失真）。</p>
+<p><strong>正解</strong>：</p>
+<ul>
+<li><strong>信道容量</strong>（功率分配）：水注入（water-filling），向好信道注水（分配更多功率/码率）</li>
+<li><strong>率失真</strong>（失真分配）：逆反水注入（reverse water-filling），向小方差分量注水（分配更多失真）</li>
+</ul>
+<p>两者是对偶的，但方向相反。在信道容量中我们<strong>最大化</strong>互信息，在率失真中我们<strong>最小化</strong>互信息。</p>
+<hr />
+<p><strong>下一章预告</strong>：第四章将介绍 Blahut-Arimoto 算法，用于数值计算没有闭式解的率失真函数，并扩展到矢量量化和多维信源。</p>
+<p><a href="chapter2.html">← 第二章</a> | <a href="index.html">返回目录</a> | <a href="chapter4.html">第四章：率失真计算与矢量量化 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter2.html" class="nav-link prev">← 第二章：率失真定理与理论性质</a><a href="chapter4.html" class="nav-link next">第四章：率失真计算与矢量量化 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="./">
+    <title>第六章：图像与视频压缩中的率失真</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/highlight.css">
+    <script src="assets/script.js" defer></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: false,
+                packages: {'[+]': ['noerrors', 'ams']}
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            loader: {
+                load: ['[tex]/noerrors', '[tex]/ams']
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>目录</h3>
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+            <div class="sidebar-search">
+                <input type="text" id="sidebar-search-input" placeholder="搜索..." autocomplete="off">
+            </div>
+            <div id="tree-container">
+                <nav class="tree-nav" role="tree">
+                    <div class="tree-item " >
+                        <a href="index.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">率失真理论教程</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter1.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第一章：信息论基础与率失真入门</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter2.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第二章：率失真定理与理论性质</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter3.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第三章：经典信源的率失真函数</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter4.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第四章：率失真计算与矢量量化</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter5.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第五章：感知失真度量与率失真感知权衡</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item active" >
+                        <a href="chapter6.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第六章：图像与视频压缩中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter7.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第七章：字典学习与稀疏编码的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter8.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第八章：深度学习中的率失真</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="chapter9.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">第九章：实践指南与应用案例</span>
+                        </a>
+                    </div>
+                
+                    <div class="tree-item " >
+                        <a href="CLAUDE.html" class="tree-link">
+                            <span class="tree-icon">📄</span>
+                            <span class="tree-title">Untitled</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </nav>
+        
+        <main class="content">
+            <article>
+                <h1 id="_1">第六章：图像与视频压缩中的率失真</h1>
+<p>本章探讨率失真理论在实际图像和视频编码标准中的应用，包括JPEG、H.264、H.265和AV1。我们将看到理论如何指导实践：DCT变换、量化表设计、率失真优化（RDO）等核心技术都源自率失真理论。</p>
+<p><strong>学习目标</strong>：</p>
+<ul>
+<li>理解DCT变换的率失真意义</li>
+<li>掌握量化表设计的原理</li>
+<li>了解视频编码中的RDO技术</li>
+<li>建立从理论到实践的联系</li>
+</ul>
+<hr />
+<h2 id="61-jpeg">6.1 JPEG图像压缩</h2>
+<h3 id="611-jpeg">6.1.1 JPEG编码流程</h3>
+<p>JPEG（Joint Photographic Experts Group）是最经典的有损图像压缩标准。其核心流程：</p>
+<div class="codehilite"><pre><span></span><code>原始图像 → 分块 → DCT变换 → 量化 → 熵编码 → 压缩数据
+          (8×8)   (频域)    (有损)  (无损)
+</code></pre></div>
+
+<p>每一步都与率失真理论密切相关。</p>
+<h3 id="612-dct">6.1.2 DCT变换：能量压缩</h3>
+<p><strong>离散余弦变换</strong>（DCT）将空间域的8×8图像块转换到频域：</p>
+<p>$$F(u,v) = \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \cos\frac{(2x+1)u\pi}{16} \cos\frac{(2y+1)v\pi}{16}$$
+<strong>为什么用DCT？率失真视角</strong>：</p>
+<ol>
+<li>
+<p><strong>能量压缩</strong>：自然图像的能量集中在低频，DCT将能量聚集到少数系数</p>
+</li>
+<li>
+<p><strong>去相关</strong>：相邻像素高度相关，DCT使系数接近独立</p>
+</li>
+<li>
+<p><strong>接近KLT</strong>：对于一阶马尔可夫过程，DCT近似最优的KLT（Karhunen-Loève变换）</p>
+</li>
+<li>
+<p><strong>率失真增益</strong>：变换后的系数分布更接近独立高斯，可以利用第三章的率失真函数</p>
+</li>
+</ol>
+<p><strong>DCT的能量压缩性质详解</strong>：</p>
+<p>考虑一个典型的8×8自然图像块：</p>
+<p><strong>空间域</strong>：64个像素值，高度相关</p>
+<ul>
+<li>相邻像素值变化通常很小（平滑区域）</li>
+<li>方差分布相对均匀</li>
+<li>直接量化效率低</li>
+</ul>
+<p><strong>频域</strong>（DCT后）：64个系数，接近独立</p>
+<ul>
+<li><strong>DC系数</strong> $F(0,0)$：平均值，通常很大（占总能量的50-90%）</li>
+<li><strong>低频系数</strong>：少数几个（如前10个），占剩余能量的80-90%</li>
+<li><strong>高频系数</strong>：大量（如后50个），能量很小，接近0</li>
+</ul>
+<p><strong>数值例子</strong>：</p>
+<p>对于典型自然图像块，DCT系数的能量分布：</p>
+<p>| 系数类型 | 数量 | 占总能量 |</p>
+<table>
+<thead>
+<tr>
+<th>系数类型</th>
+<th>数量</th>
+<th>占总能量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DC (0,0)</td>
+<td>1</td>
+<td>60%</td>
+</tr>
+<tr>
+<td>低频 (u+v≤3)</td>
+<td>9</td>
+<td>30%</td>
+</tr>
+<tr>
+<td>中频 (4≤u+v≤8)</td>
+<td>20</td>
+<td>9%</td>
+</tr>
+<tr>
+<td>高频 (u+v&gt;8)</td>
+<td>34</td>
+<td>1%</td>
+</tr>
+</tbody>
+</table>
+<p>这种能量聚集意味着：</p>
+<ul>
+<li>可以粗略量化（甚至丢弃）高频系数而失真很小</li>
+<li>符合率失真理论的水注入：在高能量（高方差）成分上投入更多比特</li>
+</ul>
+<p><strong>为什么DCT能去相关？</strong></p>
+<p>相邻像素的相关性在空间域表现为协方差矩阵的非对角元素。DCT作为近似KLT，将协方差矩阵对角化：</p>
+<ul>
+<li><strong>空间域</strong>：$\text{Cov}(f)$ 是满矩阵，像素间高度相关</li>
+<li><strong>频域</strong>：$\text{Cov}(F) \approx \text{diag}(\sigma_1^2, ..., \sigma_{64}^2)$，系数近似独立</li>
+</ul>
+<p>独立性的好处：可以对每个系数独立量化，而不需要考虑系数间的联合分布。</p>
+<p><strong>DCT vs KLT</strong>：</p>
+<p><strong>KLT</strong>（Karhunen-Loève变换）：</p>
+<ul>
+<li>理论最优：完全去相关，最大能量压缩</li>
+<li>缺点：依赖于数据的协方差矩阵，不同图像需要不同的KLT基</li>
+<li>计算：需要特征分解，复杂度高</li>
+<li>无法预存：基向量随数据变化</li>
+</ul>
+<p><strong>DCT</strong>：</p>
+<ul>
+<li>近似最优：对一阶马尔可夫过程（相关系数ρ≈0.95），DCT性能接近KLT（相差&lt;1 dB）</li>
+<li>优点：固定基向量，所有图像使用相同DCT</li>
+<li>计算：快速算法（FFT-like），复杂度 $O(N \log N)$</li>
+<li>可预存：解码器无需传输变换矩阵</li>
+</ul>
+<p><strong>率失真视角的权衡</strong>：</p>
+<p>KLT虽然最优，但需要传输基向量（$64 \times 64 = 4096$个系数），这是巨大的开销。DCT牺牲微小性能（&lt;1 dB），换取：</p>
+<ul>
+<li>无需传输变换矩阵（零比特开销）</li>
+<li>快速计算（实时编解码）</li>
+<li>标准化（所有实现兼容）</li>
+</ul>
+<p>这是经典的率失真权衡：<strong>少量失真（DCT vs KLT）换取大量码率节省（无需传输基向量）</strong>。</p>
+<p><strong>Rule of thumb</strong>：DCT本身是无损的，但它为后续的有损量化创造了有利条件。低频系数重要（大方差），高频系数次要（小方差），符合水注入原理。在实际应用中，DCT的性能已经非常接近理论最优（KLT），额外的复杂度不值得。</p>
+<h3 id="613">6.1.3 量化：率失真权衡的实现</h3>
+<p>量化是JPEG中唯一的有损步骤。对每个DCT系数 $F(u,v)$：
+$$F_Q(u,v) = \text{round}\left(\frac{F(u,v)}{Q(u,v)}\right)$$
+其中 $Q(u,v)$ 是<strong>量化表</strong>（quantization table），不同频率有不同的量化步长。</p>
+<p><strong>标准JPEG量化表</strong>（亮度）：</p>
+<div class="codehilite"><pre><span></span><code>   低频    →    高频
+ 16  11  10  16  24  40  51  61
+ 12  12  14  19  26  58  60  55
+ 14  13  16  24  40  57  69  56
+ 14  17  22  29  51  87  80  62
+ 18  22  37  56  68 109 103  77
+ 24  35  55  64  81 104 113  92
+ 49  64  78  87 103 121 120 101
+ 72  92  95  98 112 100 103  99
+</code></pre></div>
+
+<p><strong>观察</strong>：</p>
+<ul>
+<li>左上角（低频）：小步长 → 精细量化 → 低失真</li>
+<li>右下角（高频）：大步长 → 粗糙量化 → 高失真</li>
+<li>这正是<strong>水注入</strong>的实践：高方差分量（低频）分配多比特，低方差分量（高频）分配少比特</li>
+</ul>
+<p><strong>量化表设计的率失真原理</strong>：</p>
+<p>从率失真理论（第三章高斯源），我们知道对于方差为 $\sigma^2$ 的高斯源，达到失真 $D$ 所需的码率：
+$$R(D) = \frac{1}{2}\log_2\frac{\sigma^2}{D}$$
+对于量化步长 $\Delta$，量化误差（失真）约为：
+$$D \approx \frac{\Delta^2}{12}$$
+因此所需比特数与量化步长的关系：
+$$R \approx \frac{1}{2}\log_2\frac{12\sigma^2}{\Delta^2}$$
+<strong>关键洞察</strong>：比特分配应与方差成对数关系。对于DCT系数：</p>
+<ul>
+<li>高方差系数（低频）：$\sigma^2$ 大 → 需要多比特 → 小步长 $\Delta$</li>
+<li>低方差系数（高频）：$\sigma^2$ 小 → 需要少比特 → 大步长 $\Delta$</li>
+</ul>
+<p>理论最优量化步长：
+$$Q(u,v) \propto \sigma(u,v)$$
+其中 $\sigma(u,v)$ 是第 $(u,v)$ 个DCT系数的标准差。</p>
+<p><strong>实际设计考虑</strong>：</p>
+<p>JPEG标准量化表是基于：</p>
+<ol>
+<li><strong>统计分析</strong>：对大量自然图像的DCT系数统计方差</li>
+<li><strong>人类视觉系统</strong>：高频细节不敏感，可以更粗略量化</li>
+<li><strong>实验调优</strong>：主观质量测试</li>
+</ol>
+<p>示例：对于典型8×8图像块的DCT系数标准差（相对值）：</p>
+<p>| 位置 | (0,0) | (0,1) | (1,0) | (7,7) |</p>
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>(0,0)</th>
+<th>(0,1)</th>
+<th>(1,0)</th>
+<th>(7,7)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\sigma$</td>
+<td>100</td>
+<td>30</td>
+<td>25</td>
+<td>3</td>
+</tr>
+<tr>
+<td>$Q$ (标准表)</td>
+<td>16</td>
+<td>11</td>
+<td>12</td>
+<td>99</td>
+</tr>
+<tr>
+<td>比率 $Q/\sigma$</td>
+<td>0.16</td>
+<td>0.37</td>
+<td>0.48</td>
+<td>33</td>
+</tr>
+</tbody>
+</table>
+<p>观察：量化步长大致随方差减小而增大，但并非严格比例（因为加入了感知权重）。</p>
+<p><strong>质量因子</strong>（Quality Factor, QF）：</p>
+<p>JPEG允许通过质量因子 $Q \in [1, 100]$ 缩放量化表：
+$$Q_{\text{actual}}(u,v) = Q_{\text{base}}(u,v) \cdot \frac{100 - QF}{50}$$</p>
+<ul>
+<li>$QF = 100$：最小量化（接近无损）</li>
+<li>$QF = 50$：标准质量</li>
+<li>$QF = 10$：高压缩（高失真）</li>
+</ul>
+<p><strong>QF的率失真曲线</strong>：</p>
+<p>对于典型图像：</p>
+<p>| QF | 文件大小 | PSNR (dB) | 主观质量 |</p>
+<table>
+<thead>
+<tr>
+<th>QF</th>
+<th>文件大小</th>
+<th>PSNR (dB)</th>
+<th>主观质量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>100</td>
+<td>100%</td>
+<td>45+</td>
+<td>极优（几乎无损）</td>
+</tr>
+<tr>
+<td>95</td>
+<td>60%</td>
+<td>40-42</td>
+<td>优秀（难以察觉）</td>
+</tr>
+<tr>
+<td>85</td>
+<td>40%</td>
+<td>38-40</td>
+<td>良好（轻微失真）</td>
+</tr>
+<tr>
+<td>75</td>
+<td>25%</td>
+<td>35-38</td>
+<td>可接受</td>
+</tr>
+<tr>
+<td>50</td>
+<td>15%</td>
+<td>32-35</td>
+<td>中等（明显失真）</td>
+</tr>
+<tr>
+<td>25</td>
+<td>8%</td>
+<td>28-32</td>
+<td>较差（块效应明显）</td>
+</tr>
+<tr>
+<td>10</td>
+<td>5%</td>
+<td>&lt;28</td>
+<td>很差（严重伪影）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rule of thumb</strong>：</p>
+<ul>
+<li>网络传输：QF=75-85（平衡质量与大小）</li>
+<li>高质量存储：QF=90-95（接近无损）</li>
+<li>缩略图：QF=60-70（可接受失真）</li>
+<li>QF&gt;95：收益递减，文件大小快速增长但视觉改善微小</li>
+<li>QF&lt;50：不推荐，除非极端带宽限制</li>
+</ul>
+<h3 id="614">6.1.4 熵编码：实现理论码率</h3>
+<p>量化后的系数稀疏（多数为0），使用<strong>霍夫曼编码</strong>或<strong>算术编码</strong>进行无损压缩：</p>
+<ul>
+<li><strong>DC系数</strong>（左上角）：DPCM编码（利用块间相关性）</li>
+<li><strong>AC系数</strong>：Zigzag扫描 + 游程编码 + 霍夫曼编码</li>
+</ul>
+<p>这对应率失真理论中的$R = I(X;\hat{X})$：量化后的符号分布通过熵编码达到接近熵的码率。</p>
+<p><strong>DC系数的DPCM编码详解</strong>：</p>
+<p>DC系数（块的平均值）在相邻块间高度相关。JPEG利用这一点：</p>
+<ol>
+<li>不直接编码DC值，而是编码与前一个块的<strong>差值</strong></li>
+<li>差值通常很小，熵更低</li>
+</ol>
+<p>示例：</p>
+<div class="codehilite"><pre><span></span><code>块序列的DC值：  120, 125, 123, 128, 130, ...
+差分编码：      120,   5,  -2,   5,   2, ...
+                 ↑(第一个直接编码，后续编码差值)
+</code></pre></div>
+
+<p>差值的熵远小于原始DC值的熵：</p>
+<ul>
+<li>原始DC：$H \approx 8$ 比特（128-255范围）</li>
+<li>差分DC：$H \approx 3-4$ 比特（集中在-10到+10）</li>
+</ul>
+<p>这是<strong>预测编码</strong>的思想，在率失真理论中对应于利用信源的记忆性。</p>
+<p><strong>AC系数的Zigzag扫描</strong>：</p>
+<p>AC系数按照Zigzag顺序扫描（从低频到高频）：</p>
+<div class="codehilite"><pre><span></span><code>扫描顺序（箭头方向）：
+ 0→ 1  5→ 6
+ ↓  ↗  ↓  ↗
+ 2  4  7 12
+ ↓  ↗  ↓  ↗
+ 3  8 11 13
+ ↓  ↗  ↓  ↗
+ 9 10 14 15
+</code></pre></div>
+
+<p><strong>为什么Zigzag？</strong></p>
+<ul>
+<li>低频系数能量大，高频系数多为0</li>
+<li>Zigzag使得0连续出现，便于游程编码</li>
+<li>典型AC系数序列：[12, 3, -2, 0, 1, 0, 0, 0, 0, ..., 0]（后面大量0）</li>
+</ul>
+<p><strong>游程编码（Run-Length Encoding）</strong>：</p>
+<p>将连续的0压缩为 (run, value) 对：</p>
+<ul>
+<li>(0, 12)：0个零，值12</li>
+<li>(0, 3)：0个零，值3</li>
+<li>(0, -2)：0个零，值-2</li>
+<li>(1, 1)：1个零，值1</li>
+<li>(63, EOB)：后面全是0，结束符</li>
+</ul>
+<p><strong>霍夫曼编码</strong>：</p>
+<p>对 (run, value) 对进行霍夫曼编码，常见模式用短码：</p>
+<ul>
+<li>(0, 0), (0, 1), (0, -1), (1, 1)：频繁出现，2-4比特</li>
+<li>(15, 0), (0, 15)：罕见，10-12比特</li>
+</ul>
+<p><strong>实际性能分析</strong>：</p>
+<p>对于典型图像块：</p>
+<ul>
+<li>原始像素：$64 \times 8 = 512$ 比特</li>
+<li>DCT后量化：约20-30个非零系数</li>
+<li>熵编码后：约50-100比特</li>
+<li>压缩比：5-10倍</li>
+</ul>
+<p><strong>熵编码的效率</strong>：</p>
+<p>熵编码的理论极限是符号序列的熵 $H$。实际表现：</p>
+<ul>
+<li><strong>霍夫曼编码</strong>：$L_{\text{Huffman}} \leq H + 1$ 比特/符号</li>
+<li>优点：快速，整数码长</li>
+<li>
+<p>缺点：对于小概率符号，码长可能远超 $H$</p>
+</li>
+<li>
+<p><strong>算术编码</strong>：$L_{\text{Arithmetic}} \to H$（随序列长度增加）</p>
+</li>
+<li>优点：接近熵，对任意分布都高效</li>
+<li>缺点：计算复杂，专利限制（部分已过期）</li>
+</ul>
+<p>JPEG基线版本使用霍夫曼，高级版本可选算术编码（码率节省约5-10%）。</p>
+<p><strong>Rule of thumb</strong>：JPEG的实际码率约为理论码率的 1.2-1.5 倍（由于块间独立性假设、量化表固定等因素）。熵编码贡献约70-80%的压缩，量化（稀疏化）贡献其余20-30%。</p>
+<hr />
+<h2 id="62-h264h265">6.2 H.264/H.265视频压缩</h2>
+<h3 id="621">6.2.1 视频编码的额外维度</h3>
+<p>视频相比图像增加了时间维度，带来更多冗余和压缩机会：</p>
+<ul>
+<li><strong>时间冗余</strong>：相邻帧高度相似</li>
+<li><strong>空间冗余</strong>：帧内像素相关性（类似JPEG）</li>
+</ul>
+<p><strong>H.264/AVC</strong>和<strong>H.265/HEVC</strong>是现代视频编码标准。</p>
+<h3 id="622">6.2.2 帧间预测与运动补偿</h3>
+<p><strong>核心思想</strong>：不直接编码当前帧，而是编码与参考帧的<strong>差异</strong>（残差）</p>
+<div class="codehilite"><pre><span></span><code>当前帧 → 运动估计 → 运动向量 ┐
+                              ├→ 残差 → DCT → 量化 → 熵编码
+参考帧 → 运动补偿 → 预测块 ┘
+</code></pre></div>
+
+<p><strong>率失真视角</strong>：</p>
+<ul>
+<li>预测块接近当前块 → 残差小 → 失真小，但运动向量需要码率</li>
+<li>预测块粗糙 → 残差大 → 失真大，但运动向量简单（码率小）</li>
+<li>权衡：$R_{\text{total}} = R_{\text{residual}} + R_{\text{MV}}$，$D = $ 重建失真</li>
+</ul>
+<p><strong>运动补偿的详细机制</strong>：</p>
+<ol>
+<li>
+<p><strong>运动估计（Motion Estimation）</strong>：
+   - 在参考帧中搜索与当前块最匹配的位置
+   - 输出：运动向量 $(mv_x, mv_y)$，表示位移
+   - 搜索范围：通常 $\pm 16$ 到 $\pm 128$ 像素</p>
+</li>
+<li>
+<p><strong>运动补偿（Motion Compensation）</strong>：
+   - 使用运动向量从参考帧提取预测块
+   - 可能需要亚像素插值（1/2、1/4像素精度）</p>
+</li>
+<li>
+<p><strong>残差编码</strong>：
+   - 残差 = 当前块 - 预测块
+   - 残差通常比原始块能量小得多</p>
+</li>
+</ol>
+<p><strong>数值例子</strong>：</p>
+<p>考虑一个运动场景：</p>
+<ul>
+<li><strong>当前块</strong>：像素值范围 [50, 200]，方差 $\sigma^2 = 1000$</li>
+<li><strong>预测块</strong>（运动补偿后）：非常接近当前块</li>
+<li><strong>残差</strong>：像素值范围 [-10, +10]，方差 $\sigma^2_{\text{res}} = 50$</li>
+</ul>
+<p>能量减少：$\frac{\sigma^2}{\sigma^2_{\text{res}}} = \frac{1000}{50} = 20$ 倍</p>
+<p>根据高斯源率失真函数：
+$$R(D) = \frac{1}{2}\log_2\frac{\sigma^2}{D}$$
+在相同失真 $D$ 下：</p>
+<ul>
+<li>直接编码（I帧）：$R_I = \frac{1}{2}\log_2\frac{1000}{D}$</li>
+<li>残差编码（P帧）：$R_P = \frac{1}{2}\log_2\frac{50}{D}$</li>
+<li>节省：$R_I - R_P = \frac{1}{2}\log_2 20 \approx 2.16$ 比特/像素</li>
+</ul>
+<p>对于16×16块（256像素），节省约 $2.16 \times 256 \approx 550$ 比特！</p>
+<p><strong>运动向量的开销</strong>：</p>
+<p>运动向量本身需要编码：</p>
+<ul>
+<li>典型MV精度：1/4像素</li>
+<li>搜索范围：$\pm 64$ 像素</li>
+<li>每个分量需要：约 $\log_2(64 \times 4 \times 2) \approx 9$ 比特</li>
+<li>两个分量（x, y）：18比特</li>
+</ul>
+<p>但实际更少，因为：</p>
+<ol>
+<li><strong>MV预测</strong>：使用相邻块的MV预测当前MV，只编码差值</li>
+<li><strong>MV差值小</strong>：相邻块运动通常相似，差值集中在 $[-2, +2]$</li>
+<li><strong>熵编码</strong>：霍夫曼/算术编码，常见差值用短码</li>
+</ol>
+<p>实际MV开销：约4-8比特（远小于550比特的残差节省）</p>
+<p><strong>率失真权衡示例</strong>：</p>
+<p>| 策略 | MV复杂度 | MV码率 | 残差能量 | 残差码率 | 总码率 |</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>MV复杂度</th>
+<th>MV码率</th>
+<th>残差能量</th>
+<th>残差码率</th>
+<th>总码率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>粗糙MV</td>
+<td>低</td>
+<td>5 bit</td>
+<td>高（$\sigma^2=200$）</td>
+<td>450 bit</td>
+<td>455 bit</td>
+</tr>
+<tr>
+<td>精确MV</td>
+<td>高</td>
+<td>12 bit</td>
+<td>低（$\sigma^2=50$）</td>
+<td>280 bit</td>
+<td>292 bit</td>
+</tr>
+<tr>
+<td>RDO最优</td>
+<td>中</td>
+<td>8 bit</td>
+<td>中（$\sigma^2=80$）</td>
+<td>320 bit</td>
+<td>328 bit</td>
+</tr>
+</tbody>
+</table>
+<p>观察：精确MV虽然MV本身开销大，但残差节省更多，总体最优。</p>
+<h3 id="623-rdo">6.2.3 率失真优化（RDO）</h3>
+<p><strong>问题</strong>：编码器有多种选择（帧内/帧间预测、块大小、运动向量、量化参数等），如何选择最优？</p>
+<p><strong>拉格朗日RDO</strong>：对于每个编码决策，最小化
+$$J = D + \lambda R$$
+其中：</p>
+<ul>
+<li>$D$：失真（通常是MSE或SAD）</li>
+<li>$R$：码率（实际比特数或估计）</li>
+<li>$\lambda$：拉格朗日乘子（由QP确定）</li>
+</ul>
+<p><strong>RDO的理论基础</strong>：</p>
+<p>这个拉格朗日形式直接源自第二章的率失真理论。回顾拉格朗日参数化：
+$$\mathcal{L}(\beta) = \min_{p(\hat{x}|x)} [I(X; \hat{X}) + \beta \mathbb{E}[d(X, \hat{X})]]$$
+在视频编码中，$\beta$ 对应 $\lambda$，但优化对象从概率分布变为具体的编码决策（模式、运动向量、块分割等）。</p>
+<p><strong>为什么这个形式有效？</strong></p>
+<p>对于固定的QP（量化参数），编码器需要在众多编码选项中找到最优方案。如果只考虑失真，会选择最复杂、最精细的预测（码率很高）。如果只考虑码率，会选择最简单的编码（质量很差）。$D + \lambda R$ 的形式在两者之间找到平衡：</p>
+<ul>
+<li>$\lambda$ 小：更关心失真，愿意用更多比特 → 选择复杂模式、精细预测</li>
+<li>$\lambda$ 大：更关心码率，容忍更大失真 → 选择简单模式、粗糙预测</li>
+</ul>
+<p><strong>典型RDO决策的详细分析</strong>：</p>
+<ol>
+<li><strong>模式选择</strong>：选择帧内16×16、8×8、4×4，或帧间预测
+$$\text{Mode} = \arg\min_m (D_m + \lambda R_m)$$
+<strong>实例</strong>：对于一个16×16的宏块，编码器需要尝试：</li>
+</ol>
+<ul>
+<li>帧内16×16（4种预测方向）</li>
+<li>帧内4×4（16个子块 × 9种方向 = 144种组合）</li>
+<li>帧间P16×16（一个运动向量）</li>
+<li>帧间P16×8、P8×16、P8×8（多个运动向量）</li>
+<li>... 总共数十种模式</li>
+</ul>
+<p>对每种模式计算 $D_m$（重建失真）和 $R_m$（码字比特数），选择 $J_m = D_m + \lambda R_m$ 最小的。</p>
+<ol start="2">
+<li><strong>运动估计</strong>：选择最优运动向量
+$$\text{MV} = \arg\min_{\text{mv}} (D_{\text{pred}}(\text{mv}) + \lambda R_{\text{MV}}(\text{mv}))$$
+<strong>传统方法</strong>（非RDO）：最小化SAD（Sum of Absolute Differences）或SSD（Sum of Squared Differences），即只考虑失真。</li>
+</ol>
+<p><strong>RDO方法</strong>：考虑运动向量的编码成本。运动向量使用差分编码（相对于预测MV），小的MV差值需要少比特，大的差值需要多比特。因此：</p>
+<ul>
+<li>精确的MV可能减少残差失真，但MV本身码率高</li>
+<li>稍微不精确的MV（接近预测MV）可能略增残差失真，但MV码率低</li>
+</ul>
+<p>RDO在两者之间权衡，通常能找到比纯粹最小失真更好的整体性能点。</p>
+<ol start="3">
+<li><strong>块分割</strong>：选择最优块大小（H.264: 16×16到4×4，H.265: 64×64到4×4）</li>
+</ol>
+<p><strong>权衡</strong>：</p>
+<ul>
+<li><strong>大块</strong>：开销小（少数MV、模式信息），但预测可能不精确（平坦区域适合）</li>
+<li><strong>小块</strong>：预测精确（适应局部细节），但开销大（多个MV）</li>
+</ul>
+<p>RDO自动选择：在平坦区域用大块（开销占优），在复杂区域用小块（预测精度占优）。</p>
+<p><strong>$\lambda$ 的选择</strong>：经验公式
+$$\lambda = 0.85 \cdot 2^{(QP-12)/3}$$
+其中QP是量化参数。这个公式源自理论推导和大量实验调优。</p>
+<p><strong>推导直觉</strong>：</p>
+<ul>
+<li>QP越大 → 量化越粗 → 失真容忍度高 → $\lambda$ 应该大（更关心节省码率）</li>
+<li>QP越小 → 量化越细 → 失真敏感 → $\lambda$ 应该小（更关心降低失真）</li>
+<li>指数关系 $2^{QP/3}$ 对应量化步长与QP的指数关系</li>
+</ul>
+<p><strong>实际复杂度</strong>：</p>
+<p>一个1920×1080的视频帧，若每个宏块（16×16）都进行完整RDO搜索：</p>
+<ul>
+<li>宏块数：$(1920/16) \times (1080/16) = 8100$ 个</li>
+<li>每个宏块的模式候选：约50-100种</li>
+<li>总计算量：$8100 \times 50 = 405000$ 次编码尝试</li>
+</ul>
+<p>这就是为什么软件编码器（x264、x265）使用多级搜索、早期终止等启发式方法加速RDO，在复杂度和性能之间权衡。</p>
+<p><strong>RDO的性能影响</strong>：</p>
+<p>研究表明，使用RDO vs 不使用RDO（只最小化失真）：</p>
+<ul>
+<li>码率节省：20-30%（相同PSNR）</li>
+<li>主观质量提升：显著（避免了不必要的小块分割、优化了MV）</li>
+</ul>
+<p>这就是为什么RDO被认为是"现代视频编码的灵魂"。</p>
+<p><strong>Rule of thumb</strong>：RDO是现代视频编码器性能的关键。软件编码器（如x264、x265）花费大量计算在RDO上，可以比硬件编码器获得20-30%的码率节省（相同质量）。在实时应用中，可以通过降低RDO搜索复杂度（如减少候选模式数）来加速编码，但会有性能损失。</p>
+<h3 id="624-h265">6.2.4 H.265的率失真改进</h3>
+<p>H.265（HEVC）相比H.264（AVC），在相同质量下码率减半。主要改进：</p>
+<ol>
+<li>
+<p><strong>更大的块</strong>：CTU（Coding Tree Unit）64×64（vs H.264的16×16）
+   - 符合率失真理论：高分辨率视频的平坦区域更大，大块更高效</p>
+</li>
+<li>
+<p><strong>更灵活的变换</strong>：4×4到32×32的DCT/DST
+   - 大块用大变换，小块用小变换，适应局部特性</p>
+</li>
+<li>
+<p><strong>更精细的预测</strong>：35种帧内预测方向（vs H.264的9种）
+   - 更好的预测 → 更小的残差 → 更低的码率</p>
+</li>
+<li>
+<p><strong>Sample Adaptive Offset（SAO）</strong>：后处理滤波器
+   - 减少量化误差在平坦区域的视觉伪影</p>
+</li>
+<li>
+<p><strong>改进的RDO</strong>：更全面的搜索空间、更准确的码率估计</p>
+</li>
+</ol>
+<hr />
+<h2 id="63-av1">6.3 AV1和现代编码器</h2>
+<h3 id="631-av1aomedia-video-1">6.3.1 AV1（AOMedia Video 1）</h3>
+<p>AV1是开放、免费的下一代视频编码标准（2018），由谷歌、Mozilla、Netflix等开发。</p>
+<p><strong>性能</strong>：相比H.265，相同质量下码率再减少约30%</p>
+<p><strong>核心技术</strong>（率失真视角）：</p>
+<ol>
+<li>
+<p><strong>超级块</strong>（Superblock）：128×128
+   - 更大的上下文用于预测和变换</p>
+</li>
+<li>
+<p><strong>更多变换</strong>：DCT、ADST（非对称DST）、WHT、identity
+   - 针对不同残差特性选择最优变换</p>
+</li>
+<li>
+<p><strong>帧内预测</strong>：方向预测 + 滤波预测 + Paeth预测
+   - 更精确的预测 → 更小的残差</p>
+</li>
+<li>
+<p><strong>CDEF（Constrained Directional Enhancement Filter）</strong>：
+   - 方向性去块效应滤波，减少量化伪影</p>
+</li>
+<li>
+<p><strong>Wiener滤波器</strong>：在重建帧上应用自适应滤波
+   - 在率失真意义下优化滤波器系数</p>
+</li>
+<li>
+<p><strong>端到端RDO</strong>：几乎所有决策都通过RDO优化</p>
+</li>
+</ol>
+<p><strong>挑战</strong>：编码复杂度极高（是H.265的10-100倍），主要用于离线编码（如Netflix、YouTube）。</p>
+<h3 id="632">6.3.2 码率控制</h3>
+<p>实际应用中（如流媒体），需要控制码率满足带宽约束。</p>
+<p><strong>目标</strong>：给定目标码率 $R_{\text{target}}$，分配码率到各帧使总失真最小
+$$\min \sum_i D_i \quad \text{s.t.} \quad \sum_i R_i = R_{\text{target}}$$
+<strong>方法</strong>：</p>
+<ol>
+<li><strong>两次编码</strong>（Two-pass）：第一次统计复杂度，第二次根据复杂度分配码率</li>
+<li><strong>单次编码</strong>（One-pass）：根据局部缓冲区状态动态调整QP</li>
+</ol>
+<p><strong>率失真意义</strong>：复杂帧（运动剧烈、细节丰富）分配更多码率，简单帧分配更少，符合水注入原理（复杂帧的"方差"大）。</p>
+<p><strong>Rule of thumb</strong>：Two-pass编码质量最好但延迟高，用于离线场景（视频网站）。One-pass用于实时场景（视频会议、直播），质量略差但延迟低。</p>
+<hr />
+<h2 id="64">6.4 率失真曲线的实际测量</h2>
+<h3 id="641-rd">6.4.1 绘制RD曲线</h3>
+<p>评估编码器性能的标准方法：</p>
+<ol>
+<li>对测试视频，用不同QP（如QP=22, 27, 32, 37）编码</li>
+<li>记录每个QP的码率 $R_i$ 和失真 $D_i$（PSNR或SSIM）</li>
+<li>绘制曲线 $(R_i, D_i)$</li>
+</ol>
+<p><strong>示例</strong>：</p>
+<div class="codehilite"><pre><span></span><code>PSNR (dB)
+  45 |           <span class="gs">*  H.265</span>
+<span class="gs">     |       *</span>
+  40 |   <span class="gs">*           *</span>  H.264
+     | <span class="gs">*         *</span>
+  35 |       <span class="gs">*           *</span>  JPEG
+     |   <span class="gs">*</span>
+<span class="gs">  30 | *</span>
+     +---------------------→ Bitrate (kbps)
+     0   500  1000  1500
+</code></pre></div>
+
+<h3 id="642-bd-ratebjntegaard-delta-rate">6.4.2 BD-rate（Bjøntegaard Delta Rate）</h3>
+<p>比较两个编码器时，使用<strong>BD-rate</strong>度量：
+$$\text{BD-rate} = \frac{\int \log R_1(D) dD - \int \log R_2(D) dD}{\int dD}$$</p>
+<p>负值表示编码器1更好（相同质量下码率更低）。</p>
+<p><strong>例</strong>：H.265相比H.264，BD-rate约为-50%，意味着相同质量下码率减半。</p>
+<hr />
+<h2 id="65">6.5 本章小结</h2>
+<p><strong>核心概念</strong>：</p>
+<ol>
+<li>
+<p><strong>JPEG</strong>：
+   - DCT变换：能量压缩，去相关
+   - 量化表：水注入的实践（低频精细，高频粗糙）
+   - 熵编码：达到接近熵的码率</p>
+</li>
+<li>
+<p><strong>H.264/H.265</strong>：
+   - 帧间预测：利用时间冗余
+   - RDO：$J = D + \lambda R$，优化所有编码决策
+   - 块大小、变换类型：适应局部特性</p>
+</li>
+<li>
+<p><strong>AV1</strong>：
+   - 更大块、更多工具
+   - 端到端RDO
+   - 复杂度与性能的权衡</p>
+</li>
+<li>
+<p><strong>码率控制</strong>：
+   - 分配码率到不同帧
+   - 符合水注入原理</p>
+</li>
+</ol>
+<p><strong>关键技术</strong>：</p>
+<ul>
+<li>DCT变换：$F(u,v) = \sum_{x,y} f(x,y) \cos(...) \cos(...)$</li>
+<li>量化：$F_Q = \text{round}(F / Q)$</li>
+<li>RDO：$J = D + \lambda R$</li>
+<li>BD-rate：编码器性能比较指标</li>
+</ul>
+<hr />
+<h2 id="66">6.6 常见陷阱与错误</h2>
+<h3 id="gotcha-1-dct">Gotcha #1: DCT是有损的？</h3>
+<p><strong>错误</strong>：认为DCT变换本身引入失真。</p>
+<p><strong>正解</strong>：DCT是<strong>正交变换，完全可逆</strong>，没有信息损失。有损来自<strong>量化</strong>步骤。DCT的作用是将能量聚集，为量化创造条件。</p>
+<h3 id="gotcha-2">Gotcha #2: 量化表是固定的</h3>
+<p><strong>错误</strong>：认为JPEG必须使用标准量化表。</p>
+<p><strong>正解</strong>：量化表可以自定义。实际中，编码器可以优化量化表适应特定图像（如libjpeg-turbo的-optimize选项）。标准表只是经验设计的起点。</p>
+<h3 id="gotcha-3-qpqf">Gotcha #3: QP和QF的关系</h3>
+<p><strong>错误</strong>：混淆H.264的QP（Quantization Parameter）和JPEG的QF（Quality Factor）。</p>
+<p><strong>正解</strong>：它们都控制质量，但定义不同：</p>
+<ul>
+<li>JPEG QF：100=高质量，0=低质量（直观）</li>
+<li>H.264 QP：0=无损，51=最差质量（反直觉）</li>
+<li>QP每增加6，码率约减半</li>
+</ul>
+<h3 id="gotcha-4-psnr">Gotcha #4: PSNR无穷大</h3>
+<p><strong>错误</strong>：当重建与原始完全相同时，PSNR = ∞，在绘制RD曲线时出错。</p>
+<p><strong>正解</strong>：处理方法：</p>
+<ul>
+<li>设定PSNR上限（如100 dB）</li>
+<li>对于无损点，单独标注</li>
+<li>绘制PSNR vs QP，而非vs bitrate</li>
+</ul>
+<h3 id="gotcha-5-lambda">Gotcha #5: $\lambda$ 的单位</h3>
+<p><strong>错误</strong>：忽略$\lambda$的单位不匹配。</p>
+<p><strong>正解</strong>：$D$ 通常是像素域的MSE（如SAD），$R$ 是比特数。$\lambda$ 的单位是"像素差异/比特"，其值取决于 $D$ 的度量。如果用PSNR作为 $D$（dB），$\lambda$ 的含义完全不同。</p>
+<p>实际中，$\lambda$ 通过经验公式（如 $\lambda = 0.85 \cdot 2^{(QP-12)/3}$）确定，已经考虑了单位。</p>
+<h3 id="gotcha-6-rdo">Gotcha #6: RDO的计算复杂度</h3>
+<p><strong>错误</strong>：认为RDO可以对所有可能性穷举。</p>
+<p><strong>正解</strong>：完全穷举不可行（组合爆炸）。实际编码器使用启发式搜索：</p>
+<ul>
+<li>运动估计：菱形搜索、EPZS等快速算法</li>
+<li>模式选择：根据粗略估计剪枝</li>
+<li>编码复杂度vs性能：x264有ultrafast到placebo共10档，差异可达100倍</li>
+</ul>
+<h3 id="gotcha-7-rd-vs">Gotcha #7: 理论RD界 vs 实际</h3>
+<p><strong>错误</strong>：期望实际编码器达到理论率失真界。</p>
+<p><strong>正解</strong>：实际编码器远未达到理论界（$R(D) = \frac{1}{2}\log\frac{\sigma^2}{D}$ for高斯源）。原因：</p>
+<ul>
+<li>块独立假设（忽略块间相关性）</li>
+<li>有限的预测、变换选项</li>
+<li>整数运算、定点量化</li>
+<li>复杂度限制</li>
+</ul>
+<p>实际编码器距理论界约3-6 dB（对于高斯源）。这是未来改进空间。</p>
+<hr />
+<p><strong>下一章预告</strong>：第七章将探讨字典学习和稀疏编码的率失真解释，理解稀疏性如何对应"率"，重建误差如何对应"失真"。</p>
+<p><a href="chapter5.html">← 第五章</a> | <a href="index.html">返回目录</a> | <a href="chapter7.html">第七章：字典学习与稀疏编码的率失真 →</a></p>
+            </article>
+            
+            <nav class="page-nav"><a href="chapter5.html" class="nav-link prev">← 第五章：感知失真度量与率失真感知权衡</a><a href="chapter7.html" class="nav-link next">第七章：字典学习与稀疏编码的率失真 →</a></nav>
+        </main>
+    </div>
+</body>
+</html>
